@@ -29,7 +29,11 @@ def run_payload(request: Request, run_id: str) -> dict:
     storyboard = load_optional(root / "analysis" / "storyboard.json")
     product_analysis = load_optional(root / "analysis" / "product_analysis.json")
     analysis_mode = (product_analysis or {}).get("analysis_mode")
-    if analysis_mode == "human_reviewed_theme_reference":
+    if state.output_type == "image":
+        generation_mode = f"image_template_{state.image_template_id}"
+        output_kind = "task_image_template"
+        is_real_output = True
+    elif analysis_mode == "human_reviewed_theme_reference":
         generation_mode = "reviewed_theme_tryon"
         output_kind = "18s_curated_camera_motion"
         is_real_output = True
@@ -59,13 +63,21 @@ def run_payload(request: Request, run_id: str) -> dict:
             "video_qa": load_optional(root / "video_qa" / f"{shot_id}.json"),
             "attempts": state.shot_attempts.get(shot_id, {"keyframe": 0, "video": 0}),
         })
+    image_output = next((root / "task_images").glob("*.png"), None)
     return {
         **state.model_dump(mode="json"),
         "input_url": f"{prefix}/input/{input_file.name}" if input_file else None,
         "product_analysis": product_analysis,
         "scene_decision": load_optional(root / "analysis" / "scene_decision.json"),
         "motion_decision": load_optional(root / "analysis" / "motion_decision.json"),
+        "generation_styles": load_optional(root / "analysis" / "generation_styles.json"),
         "storyboard": storyboard, "shots": shots,
+        "image_output_url": (
+            f"{prefix}/task_images/{image_output.name}" if image_output else None
+        ),
+        "image_generation_manifest": load_optional(
+            root / "task_images" / "generation_manifest.json"
+        ),
         "final_video_url": f"{output_prefix}/final.mp4" if (container.assets.workspace / "outputs" / run_id / "final.mp4").exists() else None,
         "output_directory": str((container.assets.workspace / "outputs" / run_id).resolve()),
         "generation_mode": generation_mode,
@@ -87,7 +99,12 @@ async def get_run(run_id: str, request: Request):
 @router.get("/runs/{run_id}/result")
 async def get_result(run_id: str, request: Request):
     payload = run_payload(request, run_id)
-    return {"status": payload["status"], "final_video_url": payload["final_video_url"]}
+    return {
+        "status": payload["status"],
+        "final_video_url": payload["final_video_url"],
+        "image_output_url": payload["image_output_url"],
+        "output_type": payload["output_type"],
+    }
 
 
 @router.post("/runs/{run_id}/resume", status_code=202)

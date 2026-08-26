@@ -53,7 +53,6 @@ class RuntimeProviderManager:
             raise RuntimeError(f"API Key is not configured for {labels}")
 
         vision_profile = self.relay_config.profile(selection.vision_provider_id)
-        image_profile = self.relay_config.profile(selection.image_provider_id)
         video_profile = self.relay_config.profile(selection.video_provider_id)
         vision_api_key = self.relay_config.api_key(
             "vision", selection.vision_provider_id
@@ -68,21 +67,7 @@ class RuntimeProviderManager:
             self.settings.prompts_dir / "product_analysis.md",
             base_url=vision_profile.openai_base_url,
         )
-        image = OpenAIImageProvider(
-            image_api_key,
-            selection.image_model,
-            base_url=image_profile.openai_base_url,
-            async_generation=(
-                image_profile.data.get("image", {}).get("protocol")
-                == "kuaipao_async"
-            ),
-            json_reference_generation=(
-                image_profile.data.get("image", {}).get("protocol")
-                == "kuaipao_json_reference"
-            ),
-            timeout_seconds=self.settings.relay_video_timeout_seconds,
-            poll_interval=self.settings.relay_video_poll_interval_seconds,
-        )
+        image = self.build_image_provider(selection)
         visual_qa = OpenAIVisualQAProvider(
             vision_api_key,
             selection.vision_model,
@@ -122,6 +107,30 @@ class RuntimeProviderManager:
         self.settings.openai_image_model = selection.image_model
         self.settings.relay_id = selection.video_provider_id
         self.settings.relay_video_model = selection.video_model
+
+    def build_image_provider(
+        self, selection: RelaySelection | None = None
+    ) -> OpenAIImageProvider:
+        """Build the image capability without requiring vision or video keys."""
+        selection = selection or self.relay_config.selection()
+        profile = self.relay_config.profile(selection.image_provider_id)
+        api_key = self.relay_config.api_key(
+            "image", selection.image_provider_id
+        )
+        if not api_key:
+            raise RuntimeError(
+                f"{profile.label} 换装图片 API Key 尚未配置"
+            )
+        protocol = profile.data.get("image", {}).get("protocol")
+        return OpenAIImageProvider(
+            api_key,
+            selection.image_model,
+            base_url=profile.openai_base_url,
+            async_generation=protocol == "kuaipao_async",
+            json_reference_generation=protocol == "kuaipao_json_reference",
+            timeout_seconds=self.settings.relay_video_timeout_seconds,
+            poll_interval=self.settings.relay_video_poll_interval_seconds,
+        )
 
     def clear_active_key(self, capability: str = "video") -> None:
         selection = self.relay_config.selection()

@@ -27,10 +27,18 @@ class RunManager:
         self.db = db
         self.assets = assets
 
-    def create(self, character_id: str = "asian_girl_001") -> RunState:
+    def create(
+        self,
+        character_id: str = "asian_girl_001",
+        image_template_id: str = "realistic-photography",
+        video_style_id: str = "video-cat-photo",
+        output_type: str = "video",
+    ) -> RunState:
         run_id = datetime.now().strftime("%Y%m%d_%H%M%S_") + uuid4().hex[:6]
         now = utc_now()
-        state = RunState(run_id=run_id, status="CREATED", character_id=character_id, progress=0,
+        state = RunState(run_id=run_id, status="CREATED", character_id=character_id,
+                         image_template_id=image_template_id, video_style_id=video_style_id, progress=0,
+                         output_type=output_type,
                          current_step="Created", created_at=now, updated_at=now, steps=dict(DEFAULT_STEPS))
         self.assets.create_run(run_id)
         self._persist(state)

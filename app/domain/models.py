@@ -100,6 +100,9 @@ class RunState(BaseModel):
     run_id: str
     status: str
     character_id: str = "asian_girl_001"
+    image_template_id: str = "realistic-photography"
+    video_style_id: str = "video-cat-photo"
+    output_type: Literal["image", "video"] = "video"
     progress: int = 0
     current_step: str = "Created"
     created_at: str

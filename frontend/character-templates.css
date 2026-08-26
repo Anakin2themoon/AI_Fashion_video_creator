@@ -7,9 +7,64 @@
 
 .template-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 16px;
 }
+
+.generation-style-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 16px 4px 6px;
+}
+
+.style-control-head {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.style-control-head strong { font: 18px Georgia, "Songti SC", serif; }
+.style-control-head small { color: var(--muted); }
+
+.generation-style-controls label,
+.template-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+
+.generation-style-controls select,
+.template-toolbar select {
+  min-width: 0;
+  width: 100%;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .65);
+  color: var(--ink);
+  padding: 11px 12px;
+  font-size: 12px;
+}
+
+.style-disabled { opacity: .45; }
+.final-image { width: 100%; max-height: 720px; object-fit: contain; background: #111; }
+
+.template-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 20px;
+  margin: 0 0 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+.template-toolbar label { width: min(360px, 100%); }
+.template-toolbar strong { color: var(--accent); font-size: 12px; }
 
 .template-card {
   border: 1px solid var(--line);
@@ -75,6 +130,9 @@
 .result-link { display: inline-block; color: #fff; border-color: #fff; text-decoration: none; margin-top: 12px; }
 
 @media (max-width: 850px) {
+  .generation-style-controls,
   .template-grid,
   .template-result { grid-template-columns: 1fr; }
+
+  .template-toolbar { align-items: stretch; flex-direction: column; }
 }

@@ -61,6 +61,8 @@ class LocalJobRunner:
                     continue
                 if job.action == "execute":
                     await self.orchestrator.execute(job.run_id)
+                elif job.action == "execute_image":
+                    await self.orchestrator.execute_image(job.run_id)
                 elif job.action == "retry_keyframe":
                     await self.orchestrator.generate_keyframe(job.run_id, job.shot_id, force=True)
                     await self.orchestrator.generate_video(job.run_id, job.shot_id, force=True)

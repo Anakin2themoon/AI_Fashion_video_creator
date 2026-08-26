@@ -1,6 +1,6 @@
 # AI Fashion Video Director
 
-本地优先的单图时装视频工作台。人物参考图负责锁定身份，上传图负责定义衣服/造型主题；真实模式先用多图编辑生成五个换装关键帧，再合成严格 18 秒的竖屏成片。全部媒体和中间产物保存在本机 `workspace/`。
+本地优先的单图时装图片与视频工作台。人物参考图负责锁定身份，上传图负责定义衣服/造型主题；创作时可独立选择任务图片模板和视频风格，也可以只生成换装图片而不调用视频 API。视频模式先用多图编辑生成五个换装关键帧，再合成严格 18 秒的竖屏成片。全部媒体和中间产物保存在本机 `workspace/`。
 
 ## 一键启动（推荐）
 
@@ -38,10 +38,10 @@ docker compose down
 
 1. 在“设置”页分别配置视觉分析、换装图片、视频生成三个 API；每项独立选择服务商、模型和 API Key。
 2. 点击“保存三个独立配置”；三个 Key 会按能力分别在本机加密保存，页面和 GET API 只显示各自掩码。
-3. 在“创作”页拖入 JPG、PNG 或 WebP 衣服商品图片，点击“按当前衣服生成亚洲日常场景 18S 视频”。
-4. 页面通过 SSE 与短轮询显示实时进度，完成后可直接播放 18 秒竖屏成片。
+3. 在“创作”页选择生成类型、图片 Category、任务图片模板和独立的视频风格，再拖入 JPG、PNG 或 WebP 衣服商品图片。
+4. 选择“仅生成图片模板”时只调用换装图片 API；选择“生成 18S 视频”时再调用视觉分析和视频 API。页面通过 SSE 与短轮询显示实时进度和结果。
 
-“人物模板”页提供角色设定图、4×4 动作分解参考表和 3D 收藏玩具三类独立图片生成。它们复用当前人物身份参考和已配置的换装图片 API，但不会启动视觉分析、视频生成或 18 秒成片流水线。生成结果保存在 `workspace/character_templates/{generation_id}/`。
+“人物模板”页集成了上游完整风格库：13 个 Category、22 个上游图片模板，以及 1 个本项目扩展的 4×4 动作分解模板，共 23 个可生成模板。Category、任务图片模板和视频风格是三个不同层级；13 个视频风格与图片模板相互独立。模板生成复用当前人物身份参考和已配置的换装图片 API，但不会启动视觉分析、视频生成或 18 秒成片流水线。
 
 NoToken 只出现在视频生成服务商列表中。视觉、换装、视频三条路由互不绑定：例如可以选择快跑视觉、OpenAI 换装、NoToken Seedance 视频，并为三项输入完全不同的 Key。
 
@@ -57,6 +57,26 @@ NoToken 只出现在视频生成服务商列表中。视觉、换装、视频三
 `mock` 只用于自动化工程测试：它不会换装。为避免把商品图粘贴结果误认成真实成片，WebUI/API 默认禁止提交 Mock 生成任务。`ALLOW_MOCK_GENERATION=true` 仅应用于明确的开发自测。
 
 ## 本地产物
+
+独立图片模板保存在：
+
+```text
+workspace/image_templates/{template_id}/{generation_id}/
+├── {template_id}.png
+└── generation_manifest.json
+```
+
+创作页的图片-only 任务保存在：
+
+```text
+workspace/runs/{run_id}/
+├── analysis/generation_styles.json   # 图片模板与视频风格分开保存
+├── task_images/{image_template_id}.png
+├── task_images/generation_manifest.json
+└── state.json
+```
+
+图片-only 清单会写入 `video_invoked: false`，不会创建视频结果。
 
 每次运行完整保存在：
 
@@ -107,7 +127,7 @@ fullbody_side.png
 
 运行时配置 API 同时提供 `/api/v1` 和 `/api/v4` 前缀：`provider-config/catalog`、`provider-config`、`provider-config/test`、`runtime-config`。任何响应都不包含完整 API Key。
 
-人物图片模板及示例封面改编自 [awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2) 的“人物与角色”模板，依据 MIT License 使用；来源元数据保存在 `config/character_image_templates.json`。
+图片风格目录、13 个 Category 封面和 22 个模板封面来自 [awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2)，依据 MIT License 使用。同步的目录保存在 `config/awesome_style_library.json`，本项目的提示词覆盖与扩展模板保存在 `config/character_image_templates.json`。
 
 ## 测试
 
@@ -116,6 +136,14 @@ fullbody_side.png
 ```bash
 docker compose run --rm backend sh -lc "pip install -e '.[test]' && pytest -q"
 ```
+
+只调用图片 API、逐个验证全部 23 个模板（不生成视频）：
+
+```powershell
+python scripts/self_test_image_templates.py --concurrency 3 --output workspace\image_template_selftest\latest
+```
+
+脚本会从本地 API 拉取完整目录，逐模板生成并用 Pillow 解码验证，最后写入 `summary.json`；报告中的 `video_invoked` 必须为 `false`。
 
 Mock 端到端 API 烟雾测试前，仅在测试环境设置 `ALLOW_MOCK_GENERATION=true`，然后使用：
 

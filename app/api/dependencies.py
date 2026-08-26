@@ -86,6 +86,10 @@ def build_container(settings: Settings) -> Container:
     motion_router = MotionRouter(loader.load("motion_library.json"), loader.load("motion_router.json"))
     storyboard = StoryboardGenerator(loader.load("storyboard_template.json"))
     qa_rules = loader.load("qa_rules.json")
+    character_templates = CharacterTemplateCatalog(
+        settings.config_dir / "awesome_style_library.json",
+        settings.config_dir / "character_image_templates.json",
+    )
     visual_qa = None
     if settings.vision_provider == "openai" and settings.openai_api_key:
         visual_qa = OpenAIVisualQAProvider(
@@ -97,14 +101,11 @@ def build_container(settings: Settings) -> Container:
     orchestrator = Orchestrator(
         analyzer, scene_router, motion_router, storyboard, image, ImageQA(qa_rules["image"], visual_qa),
         video, VideoQA(qa_rules["video"], visual_qa, ffmpeg), composer, CharacterRegistry(settings.character_dir),
-        PromptBuilder(settings.prompts_dir, video_generated_environment=settings.video_provider == "runway"), assets, runs, RetryPolicy(),
+        PromptBuilder(settings.prompts_dir, video_generated_environment=settings.video_provider == "runway"), assets, runs, RetryPolicy(), character_templates,
         settings.max_concurrent_image_tasks, settings.max_concurrent_video_tasks,
     )
     provider_manager = RuntimeProviderManager(settings, relay_config, ffmpeg)
     provider_manager.bind(orchestrator)
-    character_templates = CharacterTemplateCatalog(
-        settings.config_dir / "character_image_templates.json"
-    )
     return Container(
         settings,
         assets,

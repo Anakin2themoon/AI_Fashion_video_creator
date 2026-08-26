@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 import json
 from pathlib import Path
 from app.agents.product_analyzer import ProductAnalyzer
@@ -13,9 +14,11 @@ from app.orchestrator.retry_policy import RetryPolicy
 from app.orchestrator.state_machine import PROGRESS
 from app.providers.base.image_provider import ImageProvider
 from app.providers.base.video_provider import VideoProvider
+from app.providers.openai_image import OpenAIImageProvider
 from app.providers.base.composer_provider import ComposerProvider
 from app.services.asset_manager import AssetManager
 from app.services.character_registry import CharacterRegistry
+from app.services.character_template_catalog import CharacterTemplateCatalog
 from app.services.prompt_builder import PromptBuilder
 from app.services.run_manager import RunManager
 
@@ -25,7 +28,8 @@ class Orchestrator:
                  storyboard_generator: StoryboardGenerator, image_provider: ImageProvider, image_qa: ImageQA,
                  video_provider: VideoProvider, video_qa: VideoQA, composer: ComposerProvider,
                  characters: CharacterRegistry, prompts: PromptBuilder, assets: AssetManager,
-                 runs: RunManager, retry: RetryPolicy, image_limit: int = 2, video_limit: int = 1):
+                 runs: RunManager, retry: RetryPolicy, styles: CharacterTemplateCatalog,
+                 image_limit: int = 2, video_limit: int = 1):
         self.analyzer = analyzer
         self.scene_router = scene_router
         self.motion_router = motion_router
@@ -40,8 +44,104 @@ class Orchestrator:
         self.assets = assets
         self.runs = runs
         self.retry = retry
+        self.styles = styles
         self.image_semaphore = asyncio.Semaphore(image_limit)
         self.video_semaphore = asyncio.Semaphore(video_limit)
+
+    async def execute_image(self, run_id: str) -> None:
+        """Generate one selected task image template without invoking video."""
+        try:
+            state = self.runs.get(run_id)
+            run_dir = self.assets.run_dir(run_id)
+            product_image = next((run_dir / "input").glob("product.*"), None)
+            if product_image is None:
+                raise FileNotFoundError("Run has no product input")
+            if not isinstance(self.image_provider, OpenAIImageProvider):
+                raise RuntimeError("Real image provider is not configured")
+            references = self.characters.reference_paths(state.character_id)
+            identity_reference = next(
+                (path for path in references if path.name == "identity_face.png"),
+                references[0],
+            )
+            template = self.styles.get_image_template(state.image_template_id)
+            prompt = self.styles.task_image_prompt(state.image_template_id)
+            output = run_dir / "task_images" / f"{state.image_template_id}.png"
+            (run_dir / "prompts" / "task_image_prompt.txt").write_text(
+                prompt, encoding="utf-8"
+            )
+            self._state(
+                run_id,
+                RunStatus.KEYFRAMES_GENERATING,
+                f"Generating image template {template['name']}",
+                "keyframe_generation",
+                "running",
+            )
+            async with self.image_semaphore:
+                await self.image_provider.generate_from_references(
+                    [identity_reference, product_image],
+                    prompt,
+                    output,
+                    size=template["size"],
+                )
+            from PIL import Image
+
+            with Image.open(output) as generated:
+                generated.verify()
+            with Image.open(output) as generated:
+                width, height = generated.size
+                image_format = generated.format
+            self.assets.write_json(
+                run_id,
+                "task_images/generation_manifest.json",
+                {
+                    "output_kind": "task_image_template",
+                    "image_template_id": state.image_template_id,
+                    "image_template_name": template["name"],
+                    "image_category_id": template["category_id"],
+                    "video_style_id": state.video_style_id,
+                    "video_invoked": False,
+                    "model": self.image_provider.model,
+                    "file": output.name,
+                    "format": image_format,
+                    "width": width,
+                    "height": height,
+                    "bytes": output.stat().st_size,
+                    "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+                },
+            )
+            self._state(
+                run_id,
+                RunStatus.KEYFRAMES_READY,
+                "Task image template ready",
+                "keyframe_generation",
+                "done",
+            )
+            self._state(
+                run_id,
+                RunStatus.COMPLETED,
+                "Image ready; video was not invoked",
+                "composition",
+                "done",
+            )
+            self.runs.event(
+                run_id,
+                "RUN_COMPLETED",
+                image=f"/media/runs/{run_id}/task_images/{output.name}",
+                video_invoked=False,
+            )
+        except Exception as exc:
+            self.runs.update(
+                run_id,
+                RunStatus.FAILED.value,
+                self.runs.get(run_id).progress,
+                "Image generation failed",
+                error=f"{type(exc).__name__}: {exc}",
+            )
+            self.runs.event(
+                run_id,
+                "RUN_FAILED",
+                error=f"{type(exc).__name__}: {exc}",
+            )
 
     async def execute(self, run_id: str) -> None:
         try:
@@ -130,7 +230,16 @@ class Orchestrator:
         output = run_dir / "keyframes" / f"{shot_id}.png"
         for local_attempt in range(1, self.retry.max_image_attempts + 1):
             attempt = self.runs.increment_attempt(run_id, shot_id, "keyframe")
-            prompt = self.prompts.image_prompt(analysis, scene_config, shot, motion_map[shot.motion_id], local_attempt)
+            state = self.runs.get(run_id)
+            image_template = self.styles.get_image_template(state.image_template_id)
+            prompt = self.prompts.image_prompt(
+                analysis,
+                scene_config,
+                shot,
+                motion_map[shot.motion_id],
+                local_attempt,
+                image_template,
+            )
             (run_dir / "prompts" / f"{shot_id}_image_prompt.txt").write_text(prompt, encoding="utf-8")
             self.runs.event(run_id, "STEP_STARTED", step="KEYFRAME_GENERATION", shot=shot_id, attempt=attempt)
             async with self.image_semaphore:
@@ -166,7 +275,11 @@ class Orchestrator:
         output = run_dir / "videos" / f"{shot_id}.mp4"
         for _ in range(self.retry.max_video_attempts):
             attempt = self.runs.increment_attempt(run_id, shot_id, "video")
-            prompt = self.prompts.video_prompt(shot, motion_map[shot.motion_id], scene_config)
+            state = self.runs.get(run_id)
+            video_style = self.styles.get_video_style(state.video_style_id)
+            prompt = self.prompts.video_prompt(
+                shot, motion_map[shot.motion_id], scene_config, video_style
+            )
             (run_dir / "prompts" / f"{shot_id}_video_prompt.txt").write_text(prompt, encoding="utf-8")
             self.runs.event(run_id, "STEP_STARTED", step="VIDEO_GENERATION", shot=shot_id, attempt=attempt)
             async with self.video_semaphore:

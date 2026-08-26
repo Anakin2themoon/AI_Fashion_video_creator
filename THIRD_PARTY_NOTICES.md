@@ -5,7 +5,9 @@
 - Project: https://github.com/freestylefly/awesome-gpt-image-2
 - Imported through: https://github.com/270438469/awesome-gpt-image-2
 - License: MIT
-- Used assets: character template concepts and the preview images derived from cases 27, 347 and 378.
+- Imported data: the complete `data/style-library.json` catalog (13 categories and 22 templates).
+- Used assets: all 13 category covers and all 22 template preview covers referenced by that catalog.
+- Local adaptation: prompts and taxonomy are adapted for independent task-image templates and video styles; one additional 4x4 action-breakdown template is original to this project.
 
 Copyright (c) 2026 苍何
 

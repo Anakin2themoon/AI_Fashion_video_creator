@@ -7,7 +7,15 @@ class PromptBuilder:
         self.prompts_dir = prompts_dir
         self.video_generated_environment = video_generated_environment
 
-    def image_prompt(self, analysis: ProductAnalysis, scene: dict, shot: StoryboardShot, motion: dict, attempt: int = 1) -> str:
+    def image_prompt(
+        self,
+        analysis: ProductAnalysis,
+        scene: dict,
+        shot: StoryboardShot,
+        motion: dict,
+        attempt: int = 1,
+        image_template: dict | None = None,
+    ) -> str:
         template = (self.prompts_dir / "keyframe_generation.md").read_text(encoding="utf-8")
         scene_description = ", ".join(scene["environment"]) + "; " + scene["lighting"]
         if self.video_generated_environment:
@@ -19,15 +27,33 @@ class PromptBuilder:
             product_focus=", ".join(shot.product_focus),
         )
         result += f"\nVisible garment facts: {', '.join(analysis.visible_details)}. Max body rotation: 55 degrees."
+        if image_template:
+            result += (
+                "\nTASK IMAGE TEMPLATE (independent from video style): "
+                + image_template["art_direction"]
+                + " Adapt this template's visual language to one coherent 9:16 fashion keyframe; "
+                "do not turn the task keyframe into a multi-page document or replace the selected garment."
+            )
         if attempt == 2:
             result += "\nEXTRA LOCK: prioritize exact identity and garment fidelity above pose aesthetics."
         elif attempt >= 3:
             result += "\nLOW RISK: simplify the pose, keep arms clear, face front, and minimize occlusion."
         return result
 
-    def video_prompt(self, shot: StoryboardShot, motion: dict, scene: dict | None = None) -> str:
+    def video_prompt(
+        self,
+        shot: StoryboardShot,
+        motion: dict,
+        scene: dict | None = None,
+        video_style: dict | None = None,
+    ) -> str:
         template = (self.prompts_dir / "video_generation.md").read_text(encoding="utf-8")
         result = template.format(motion_description=motion["description"], camera_motion=shot.camera_motion)
+        if video_style:
+            result += (
+                " VIDEO STYLE (independent from the task image template): "
+                + video_style["art_direction"]
+            )
         if self.video_generated_environment and scene:
             environment = ", ".join(scene["environment"])
             result += (
