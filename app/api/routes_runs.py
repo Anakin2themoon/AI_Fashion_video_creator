@@ -3,7 +3,7 @@ import json
 import os
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 
 
 router = APIRouter(tags=["runs"])
@@ -105,6 +105,26 @@ async def get_result(run_id: str, request: Request):
         "image_output_url": payload["image_output_url"],
         "output_type": payload["output_type"],
     }
+
+
+@router.get("/runs/{run_id}/download")
+async def download_result(run_id: str, request: Request):
+    container = request.app.state.container
+    try:
+        state = container.runs.get(run_id)
+    except KeyError as exc:
+        raise HTTPException(404, "Run not found") from exc
+    if state.output_type == "image":
+        result = next((container.assets.run_dir(run_id) / "task_images").glob("*.png"), None)
+        media_type = "image/png"
+        filename = f"ai-fashion-{run_id}.png"
+    else:
+        result = container.assets.workspace / "outputs" / run_id / "final.mp4"
+        media_type = "video/mp4"
+        filename = f"ai-fashion-{run_id}-18s.mp4"
+    if result is None or not result.exists():
+        raise HTTPException(409, "Result is not ready")
+    return FileResponse(result, media_type=media_type, filename=filename)
 
 
 @router.post("/runs/{run_id}/resume", status_code=202)

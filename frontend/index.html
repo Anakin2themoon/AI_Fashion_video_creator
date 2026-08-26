@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Fashion Video Director</title>
-  <link rel="stylesheet" href="/styles.css?v=20260826-auth-modal-v2" />
+  <link rel="stylesheet" href="/styles.css?v=20260826-creation-flow-v3" />
   <link rel="stylesheet" href="/provider-settings.css" />
   <link rel="stylesheet" href="/character-templates.css" />
-  <link rel="stylesheet" href="/theme-override.css?v=20260826-auth-modal-v2" />
+  <link rel="stylesheet" href="/theme-override.css?v=20260826-creation-flow-v3" />
 </head>
 <body>
   <div class="noise"></div>
@@ -77,16 +77,10 @@
           <p id="formError" class="error"></p>
         </form>
         <aside class="pipeline-card">
-          <div class="card-title"><span>编排进度</span><b id="progressValue">0%</b></div>
+          <div class="card-title"><span id="pipelineTitle">图片生成进度</span><b id="progressValue">0%</b></div>
+          <div id="pipelineModeBadge" class="pipeline-mode-badge">IMAGE CREATION</div>
           <div class="progress-track"><i id="progressBar"></i></div>
-          <ol id="pipelineSteps">
-            <li data-min="5"><i>01</i><span>商品识别<small>Visible facts only</small></span><b>○</b></li>
-            <li data-min="15"><i>02</i><span>场景路由<small>12 configured locations</small></span><b>○</b></li>
-            <li data-min="23"><i>03</i><span>动作与分镜<small>Single-front safe route</small></span><b>○</b></li>
-            <li data-min="45"><i>04</i><span>真实换装与图片 QA<small>identity + outfit/theme references</small></span><b>○</b></li>
-            <li data-min="75"><i>05</i><span>视频与时间 QA<small>18-second reviewed sequence</small></span><b>○</b></li>
-            <li data-min="96"><i>06</i><span>成片合成<small>H.264 · 360 × 640</small></span><b>○</b></li>
-          </ol>
+          <ol id="pipelineSteps"></ol>
           <p id="currentStep" class="current-step">等待新任务</p>
         </aside>
       </div>
@@ -97,10 +91,9 @@
       <div class="section-head">
         <div><p class="eyebrow">13 CATEGORIES · 22 UPSTREAM TEMPLATES · MIT</p><h2>完整图片模板库</h2></div>
       </div>
-      <p class="template-intro">已同步上游全部 Category 和工业模板，并统一适配为当前亚洲人物身份参考。这里的按钮只调用图片 API；创作页另有独立的视频风格选择。</p>
+      <p class="template-intro">这里仅用于浏览图片类型、构图和视觉方向，不在模板库直接生成。选择喜欢的模板后前往“创作”页面，上传当前衣服并统一提交图片或视频任务。</p>
       <div class="template-toolbar"><label><span>按 Category 筛选</span><select id="templateCategoryFilter"></select></label><strong id="templateCount"></strong></div>
       <div id="templateGrid" class="template-grid"><p class="settings-note">正在读取模板目录…</p></div>
-      <div id="templateResult" class="template-result hidden"></div>
     </section>
 
     <section id="runsView" class="view">
@@ -160,6 +153,6 @@
     </section>
   </main>
   <div id="toast" class="toast"></div>
-  <script src="/app.js?v=20260826-auth-modal-v2"></script>
+  <script src="/app.js?v=20260826-creation-flow-v3"></script>
 </body>
 </html>

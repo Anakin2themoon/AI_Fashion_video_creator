@@ -125,14 +125,20 @@ async def test_webui_login_protects_api_and_uses_http_only_cookie(tmp_path: Path
             webui_password="test-password",
         )
     )
+    image_run = app.state.container.runs.create(output_type="image")
+    image_result = app.state.container.assets.run_dir(image_run.run_id) / "task_images" / "result.png"
+    image_result.parent.mkdir(parents=True, exist_ok=True)
+    image_result.write_bytes(b"downloadable-image")
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         public_status = await client.get("/api/v1/system/status")
         public_catalog = await client.get("/api/v1/style-catalog")
         protected = await client.get("/api/v1/provider-config")
+        protected_download = await client.get(f"/api/v1/runs/{image_run.run_id}/download")
         bad_login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "wrong"})
         login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "test-password"})
         authenticated = await client.get("/api/v1/provider-config")
+        downloaded = await client.get(f"/api/v1/runs/{image_run.run_id}/download")
         session = await client.get("/api/v1/auth/session")
         logout = await client.post("/api/v1/auth/logout")
         protected_again = await client.get("/api/v1/provider-config")
@@ -140,10 +146,14 @@ async def test_webui_login_protects_api_and_uses_http_only_cookie(tmp_path: Path
     assert public_status.status_code == 200
     assert public_catalog.status_code == 200
     assert protected.status_code == 401
+    assert protected_download.status_code == 401
     assert bad_login.status_code == 401
     assert login.status_code == 200
     assert "httponly" in login.headers["set-cookie"].lower()
     assert authenticated.status_code == 200
+    assert downloaded.status_code == 200
+    assert downloaded.content == b"downloadable-image"
+    assert "attachment" in downloaded.headers["content-disposition"]
     assert session.json() == {"authenticated": True, "username": "admin"}
     assert logout.status_code == 200
     assert protected_again.status_code == 401

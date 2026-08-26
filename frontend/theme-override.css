@@ -34,3 +34,12 @@
 .account-status small{font-size:10px;color:#65806a}.account-status b{margin-left:4px;font-size:10px;font-weight:500;color:#8b6a63}
 @keyframes authFade{from{opacity:0}to{opacity:1}}
 @media(max-width:720px){.login-gate{padding:14px!important}.login-card{grid-template-columns:1fr!important;width:min(460px,calc(100vw - 20px))!important}.login-intro{display:none}.login-form-content{padding:58px 28px 34px}.login-form-content h1{font-size:32px}}
+
+.pipeline-mode-badge{align-self:flex-start;margin-top:10px;padding:5px 9px;border:1px solid var(--line);border-radius:20px;color:var(--accent);font-size:9px;font-weight:700;letter-spacing:.16em}
+.template-use{width:100%;display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.download-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:22px}
+.download-actions .download-button{width:auto;min-width:190px;text-decoration:none;border-radius:2px}
+.download-actions .secondary{color:white;border-color:rgba(255,255,255,.5)}
+.final-panel .final-image{width:100%;max-height:680px;object-fit:contain;background:#111}
+.detail-image{display:block;width:min(100%,520px);max-height:720px;object-fit:contain;background:#ddd}
+.detail-download{width:min(100%,390px);margin:12px 0 20px;text-decoration:none}
