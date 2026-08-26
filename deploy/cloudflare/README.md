@@ -16,6 +16,15 @@ Configure the tunnel rules in this order:
 
 The deployed Windows host uses a remotely managed tunnel. Its ingress rules are stored in Cloudflare, while the connector receives only a token from a user-private file outside this repository. The connector is registered in the current user's Windows startup key so it reconnects after sign-in. On an administrator-managed host, installing `cloudflared` as a Windows service is preferred because it can start before interactive sign-in.
 
+For a non-administrator desktop, install the included user-level watchdog. It starts after Windows sign-in and continuously restores the frontend, backend, and Tunnel if any process exits:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File deploy\windows\install-user-autostart.ps1 `
+  -PythonExe "C:\path\to\python.exe"
+```
+
+The installer stores only executable and token-file paths in `HKCU\Software\Microsoft\Windows\CurrentVersion\Run`; the token content remains outside the repository. A true pre-login boot service or `SYSTEM` scheduled task requires an elevated administrator session.
+
 The current-user startup entry should also check ports `8000` and `3000` and start the FastAPI backend and static Web UI only when they are not already listening, so both origins recover after sign-in without creating duplicate processes.
 
 Example current-user startup command (the token file itself must remain outside the repository):
