@@ -1,0 +1,51 @@
+# Cloudflare deployment
+
+Production hostname: `https://aifactorycreator.org`
+
+This application must be published through a Cloudflare Tunnel and protected by a Cloudflare Access self-hosted application. The backend contains provider credentials and generation endpoints that can consume paid API quota, so port `8000` must not be exposed directly to the Internet.
+
+## Required routing
+
+Configure the tunnel rules in this order:
+
+1. Hostname `aifactorycreator.org`, path `^/(api|media|health|docs|redoc|openapi\.json)(/.*)?$` → `http://127.0.0.1:8000`
+2. Hostname `aifactorycreator.org`, no path → `http://127.0.0.1:3000`
+3. Catch-all → HTTP 404
+
+`config.example.yml` contains the equivalent configuration for a locally managed tunnel. Never commit the tunnel token, tunnel credentials JSON, API keys, or the real user profile path.
+
+The deployed Windows host uses a remotely managed tunnel. Its ingress rules are stored in Cloudflare, while the connector receives only a token from a user-private file outside this repository. The connector is registered in the current user's Windows startup key so it reconnects after sign-in. On an administrator-managed host, installing `cloudflared` as a Windows service is preferred because it can start before interactive sign-in.
+
+Example current-user startup command (the token file itself must remain outside the repository):
+
+```powershell
+"C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel run --token-file "C:\Users\<user>\.cloudflared\ai-fashion-local.token"
+```
+
+## Access policy
+
+Create a Cloudflare Access **self-hosted** application for the entire apex hostname `aifactorycreator.org`. Add an Allow policy for the intended administrator identity before publishing the tunnel hostname. Do not use a public Bypass rule.
+
+## Validation
+
+Before starting the connector, verify locally:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:3000/ -UseBasicParsing
+Invoke-RestMethod http://127.0.0.1:8000/health
+```
+
+For a locally managed tunnel, validate the configuration:
+
+```powershell
+cloudflared tunnel ingress validate
+cloudflared tunnel ingress rule https://aifactorycreator.org/
+cloudflared tunnel ingress rule https://aifactorycreator.org/api/v1/system/status
+```
+
+After publication, verify that an unauthenticated browser is redirected to Cloudflare Access, then authenticate and check:
+
+- `/` serves the Web UI over HTTPS.
+- `/health` returns the backend health response.
+- `/api/v1/style-catalog` returns JSON.
+- Existing generated images and videos load from `/media/...`.

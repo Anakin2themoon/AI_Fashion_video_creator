@@ -9,4 +9,6 @@ node_modules/
 .next/
 tools/
 *.log
+*.token
+.cloudflared/
 .DS_Store

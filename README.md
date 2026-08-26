@@ -28,6 +28,12 @@ docker compose up --build -d
 - Backend: <http://127.0.0.1:8000>
 - API Docs: <http://127.0.0.1:8000/docs>
 
+## Cloudflare domain deployment
+
+The Web UI supports local split ports and a public same-origin deployment. On `localhost`/`127.0.0.1` it calls the backend on port `8000`; on a public hostname it uses the current HTTPS origin for API and media requests.
+
+The production hostname `aifactorycreator.org` must use a Cloudflare Tunnel with Cloudflare Access protection. See [deploy/cloudflare/README.md](deploy/cloudflare/README.md) for the routing, security, and validation checklist.
+
 停止服务不会删除历史产物：
 
 ```bash

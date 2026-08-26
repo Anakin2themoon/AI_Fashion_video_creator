@@ -1,0 +1,18 @@
+# Example for a locally managed Cloudflare Tunnel.
+# The production setup may be remotely managed in the Cloudflare dashboard;
+# keep tunnel credentials and tokens outside this repository.
+tunnel: <TUNNEL_UUID>
+credentials-file: C:\Users\<WINDOWS_USER>\.cloudflared\<TUNNEL_UUID>.json
+
+ingress:
+  # API, generated media, health, and API documentation go to FastAPI.
+  - hostname: aifactorycreator.org
+    path: ^/(api|media|health|docs|redoc|openapi\.json)(/.*)?$
+    service: http://127.0.0.1:8000
+
+  # Everything else is the static Web UI.
+  - hostname: aifactorycreator.org
+    service: http://127.0.0.1:3000
+
+  # Cloudflare requires a final catch-all rule.
+  - service: http_status:404
