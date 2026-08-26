@@ -46,6 +46,8 @@
             <label><span>图片 Category</span><select id="creationImageCategory" required></select></label>
             <label><span>任务图片模板</span><select id="creationImageTemplate" required></select></label>
             <label id="creationVideoStyleLabel"><span>视频风格</span><select id="creationVideoStyle" required></select></label>
+            <label class="prompt-input-control"><span>补充创作要求（可选）</span><textarea id="creationPromptInput" maxlength="2000" rows="3" placeholder="例如：自然晨光、轻松周末氛围。Prompt Builder 会保留人物与衣服锁定规则。"></textarea></label>
+            <p class="prompt-builder-note">Prompt Input → Prompt Builder → Generate Handler；图片与视频生成接口保持原样。</p>
           </div>
           <div class="upload-meta"><span>人物</span><strong>ASIAN GIRL 001</strong><span>画幅</span><strong>9:16 · 18S</strong></div>
           <button id="generateButton" class="primary" type="submit" disabled><span id="generateButtonLabel">检查真实生成配置…</span><b>→</b></button>

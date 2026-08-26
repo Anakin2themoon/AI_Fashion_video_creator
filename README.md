@@ -39,7 +39,30 @@ docker compose down
 1. 在“设置”页分别配置视觉分析、换装图片、视频生成三个 API；每项独立选择服务商、模型和 API Key。
 2. 点击“保存三个独立配置”；三个 Key 会按能力分别在本机加密保存，页面和 GET API 只显示各自掩码。
 3. 在“创作”页选择生成类型、图片 Category、任务图片模板和独立的视频风格，再拖入 JPG、PNG 或 WebP 衣服商品图片。
-4. 选择“仅生成图片模板”时只调用换装图片 API；选择“生成 18S 视频”时再调用视觉分析和视频 API。页面通过 SSE 与短轮询显示实时进度和结果。
+4. 可填写“补充创作要求”。本地 Prompt Builder 会把该输入与图片模板、视频风格编译成提示词计划，同时保留人物、衣服和安全锁定规则。
+5. 选择“仅生成图片模板”时只调用换装图片 API；选择“生成 18S 视频”时再调用视觉分析和视频 API。页面通过 SSE 与短轮询显示实时进度和结果。
+
+Prompt Builder 是生成 handler 前的一层纯提示词编译服务，不替换或重构现有 image/video provider：
+
+```text
+Prompt Input + Image Template + Video Style
+                    ↓
+          GenerationPromptBuilder
+                    ↓
+       generation_prompt_plan.json
+                    ↓
+          existing generate handler
+                    ↓
+       existing image/video providers
+```
+
+完整计划保存在 `workspace/runs/{run_id}/prompts/generation_prompt_plan.json`。图片模板与视频风格始终写入不同字段；用户补充要求只能作为低优先级创作方向，不能覆盖人物身份、衣服忠实度、安全限制或输出类型。
+
+遍历全部模板/风格组合、但不调用任何生成 provider 的 Prompt Builder 自测：
+
+```powershell
+python scripts/self_test_prompt_builder.py --output workspace\prompt_builder_selftest\latest
+```
 
 “人物模板”页集成了上游完整风格库：13 个 Category、22 个上游图片模板，以及 1 个本项目扩展的 4×4 动作分解模板，共 23 个可生成模板。Category、任务图片模板和视频风格是三个不同层级；13 个视频风格与图片模板相互独立。模板生成复用当前人物身份参考和已配置的换装图片 API，但不会启动视觉分析、视频生成或 18 秒成片流水线。
 

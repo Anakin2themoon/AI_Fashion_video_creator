@@ -16,6 +16,7 @@ router = APIRouter(tags=["character-templates"])
 
 class CharacterTemplateRequest(BaseModel):
     character_id: str = "asian_girl_001"
+    prompt_input: str = ""
 
 
 @router.get("/character-templates")
@@ -41,10 +42,21 @@ async def generate_character_template(
 ):
     container = request.app.state.container
     try:
-        template = container.character_templates.get(template_id)
+        prompt_plan = container.generation_prompts.build(
+            template_id,
+            container.character_templates.public_catalog()["defaults"][
+                "video_style_id"
+            ],
+            "image",
+            payload.prompt_input,
+            reference_mode="identity_only",
+        )
+        template = prompt_plan.image_template
         references = container.orchestrator.characters.reference_paths(
             payload.character_id
         )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
     except (KeyError, FileNotFoundError) as exc:
         raise HTTPException(404, str(exc)) from exc
 
@@ -63,9 +75,9 @@ async def generate_character_template(
     try:
         await provider.generate_from_references(
             references,
-            str(template["prompt"]),
+            prompt_plan.task_image.prompt,
             output_path,
-            size=str(template["size"]),
+            size=prompt_plan.task_image.size,
         )
     except Exception as exc:
         raise HTTPException(
@@ -76,13 +88,18 @@ async def generate_character_template(
     result = {
         "generation_id": generation_id,
         "template_id": template_id,
-        "template_name": template["name"],
-        "category_id": template["category_id"],
+        "template_name": template.name,
+        "category_id": template.category_id,
         "output_kind": "image_template",
         "character_id": payload.character_id,
         "model": provider.model,
         "image_url": f"/media/{relative}",
+        "prompt_builder": prompt_plan.builder,
+        "prompt_input_applied": bool(prompt_plan.prompt_input),
     }
+    (output_dir / "generation_prompt_plan.json").write_text(
+        prompt_plan.model_dump_json(indent=2), encoding="utf-8"
+    )
     (output_dir / "generation_manifest.json").write_text(
         json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8"
     )

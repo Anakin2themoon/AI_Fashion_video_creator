@@ -2,6 +2,7 @@ from pathlib import Path
 
 from app.domain.models import ProductAnalysis, StoryboardShot
 from app.services.character_template_catalog import CharacterTemplateCatalog
+from app.services.generation_prompt_builder import GenerationPromptBuilder
 from app.services.prompt_builder import PromptBuilder
 
 
@@ -49,6 +50,7 @@ def test_task_image_prompt_excludes_non_garment_theme_elements():
 
 def test_image_template_and_video_style_are_added_to_different_prompts():
     styles = catalog()
+    generation_builder = GenerationPromptBuilder(styles)
     builder = PromptBuilder(ROOT / "prompts", video_generated_environment=True)
     analysis = ProductAnalysis(
         category="dress",
@@ -70,18 +72,26 @@ def test_image_template_and_video_style_are_added_to_different_prompts():
         "lighting": "soft daylight",
     }
     motion = {"description": "relaxed standing pose"}
-    image_template = styles.get_image_template("poster-layout-system")
-    video_style = styles.get_video_style("video-cat-scene")
+    plan = generation_builder.build(
+        "poster-layout-system", "video-cat-scene", "video"
+    )
 
     image_prompt = builder.image_prompt(
-        analysis, scene, shot, motion, image_template=image_template
+        analysis,
+        scene,
+        shot,
+        motion,
+        prompt_addition=plan.image_prompt_addition,
     )
     video_prompt = builder.video_prompt(
-        shot, motion, scene, video_style=video_style
+        shot,
+        motion,
+        scene,
+        prompt_addition=plan.video_prompt_addition,
     )
 
     assert "TASK IMAGE TEMPLATE" in image_prompt
-    assert image_template["art_direction"] in image_prompt
+    assert "Selected image template: Poster Layout System" in image_prompt
     assert "VIDEO STYLE" not in image_prompt
     assert "VIDEO STYLE" in video_prompt
     assert "cinematic narrative continuity" in video_prompt

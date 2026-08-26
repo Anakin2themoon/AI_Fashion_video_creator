@@ -18,7 +18,7 @@ from app.providers.openai_image import OpenAIImageProvider
 from app.providers.base.composer_provider import ComposerProvider
 from app.services.asset_manager import AssetManager
 from app.services.character_registry import CharacterRegistry
-from app.services.character_template_catalog import CharacterTemplateCatalog
+from app.services.generation_prompt_builder import GenerationPromptBuilder
 from app.services.prompt_builder import PromptBuilder
 from app.services.run_manager import RunManager
 
@@ -28,7 +28,7 @@ class Orchestrator:
                  storyboard_generator: StoryboardGenerator, image_provider: ImageProvider, image_qa: ImageQA,
                  video_provider: VideoProvider, video_qa: VideoQA, composer: ComposerProvider,
                  characters: CharacterRegistry, prompts: PromptBuilder, assets: AssetManager,
-                 runs: RunManager, retry: RetryPolicy, styles: CharacterTemplateCatalog,
+                 runs: RunManager, retry: RetryPolicy, generation_prompts: GenerationPromptBuilder,
                  image_limit: int = 2, video_limit: int = 1):
         self.analyzer = analyzer
         self.scene_router = scene_router
@@ -44,7 +44,7 @@ class Orchestrator:
         self.assets = assets
         self.runs = runs
         self.retry = retry
-        self.styles = styles
+        self.generation_prompts = generation_prompts
         self.image_semaphore = asyncio.Semaphore(image_limit)
         self.video_semaphore = asyncio.Semaphore(video_limit)
 
@@ -63,8 +63,10 @@ class Orchestrator:
                 (path for path in references if path.name == "identity_face.png"),
                 references[0],
             )
-            template = self.styles.get_image_template(state.image_template_id)
-            prompt = self.styles.task_image_prompt(state.image_template_id)
+            prompt_plan = self._prompt_plan(run_id)
+            template = prompt_plan["image_template"]
+            task_image = prompt_plan["task_image"]
+            prompt = str(task_image["prompt"])
             output = run_dir / "task_images" / f"{state.image_template_id}.png"
             (run_dir / "prompts" / "task_image_prompt.txt").write_text(
                 prompt, encoding="utf-8"
@@ -81,7 +83,7 @@ class Orchestrator:
                     [identity_reference, product_image],
                     prompt,
                     output,
-                    size=template["size"],
+                    size=str(task_image["size"]),
                 )
             from PIL import Image
 
@@ -230,15 +232,14 @@ class Orchestrator:
         output = run_dir / "keyframes" / f"{shot_id}.png"
         for local_attempt in range(1, self.retry.max_image_attempts + 1):
             attempt = self.runs.increment_attempt(run_id, shot_id, "keyframe")
-            state = self.runs.get(run_id)
-            image_template = self.styles.get_image_template(state.image_template_id)
+            prompt_plan = self._prompt_plan(run_id)
             prompt = self.prompts.image_prompt(
                 analysis,
                 scene_config,
                 shot,
                 motion_map[shot.motion_id],
                 local_attempt,
-                image_template,
+                prompt_addition=str(prompt_plan["image_prompt_addition"]),
             )
             (run_dir / "prompts" / f"{shot_id}_image_prompt.txt").write_text(prompt, encoding="utf-8")
             self.runs.event(run_id, "STEP_STARTED", step="KEYFRAME_GENERATION", shot=shot_id, attempt=attempt)
@@ -275,10 +276,12 @@ class Orchestrator:
         output = run_dir / "videos" / f"{shot_id}.mp4"
         for _ in range(self.retry.max_video_attempts):
             attempt = self.runs.increment_attempt(run_id, shot_id, "video")
-            state = self.runs.get(run_id)
-            video_style = self.styles.get_video_style(state.video_style_id)
+            prompt_plan = self._prompt_plan(run_id)
             prompt = self.prompts.video_prompt(
-                shot, motion_map[shot.motion_id], scene_config, video_style
+                shot,
+                motion_map[shot.motion_id],
+                scene_config,
+                prompt_addition=str(prompt_plan["video_prompt_addition"]),
             )
             (run_dir / "prompts" / f"{shot_id}_video_prompt.txt").write_text(prompt, encoding="utf-8")
             self.runs.event(run_id, "STEP_STARTED", step="VIDEO_GENERATION", shot=shot_id, attempt=attempt)
@@ -316,6 +319,22 @@ class Orchestrator:
 
     def _state(self, run_id: str, status: RunStatus, current: str, step: str, step_status: str) -> None:
         self.runs.update(run_id, status.value, PROGRESS[status.value], current, step, step_status)
+
+    def _prompt_plan(self, run_id: str) -> dict:
+        """Load the handler-built plan, rebuilding only for legacy unfinished runs."""
+        plan_path = self.assets.run_dir(run_id) / "prompts" / "generation_prompt_plan.json"
+        if plan_path.exists():
+            return json.loads(plan_path.read_text(encoding="utf-8"))
+        state = self.runs.get(run_id)
+        plan = self.generation_prompts.build(
+            state.image_template_id,
+            state.video_style_id,
+            state.output_type,
+        )
+        self.assets.write_json(
+            run_id, "prompts/generation_prompt_plan.json", plan
+        )
+        return plan.model_dump(mode="json")
 
     @staticmethod
     def _qa_passed(path: Path) -> bool:

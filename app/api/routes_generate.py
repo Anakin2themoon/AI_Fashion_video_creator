@@ -16,13 +16,22 @@ async def generate(
     image_template_id: str = Form("realistic-photography"),
     video_style_id: str = Form("video-cat-photo"),
     output_type: str = Form("video"),
+    prompt_input: str = Form(""),
 ):
     suffix = Path(product_image.filename or "product.jpg").suffix.lower()
     if suffix not in ALLOWED_SUFFIXES:
         raise HTTPException(400, "Upload a JPG, PNG or WebP garment image")
     container = request.app.state.container
-    if output_type not in {"image", "video"}:
-        raise HTTPException(400, "output_type must be image or video")
+    try:
+        prompt_plan = container.generation_prompts.build(
+            image_template_id,
+            video_style_id,
+            output_type,
+            prompt_input,
+        )
+        container.orchestrator.characters.get(character_id)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(400, str(exc)) from exc
     legacy_runway_ready = (
         container.settings.vision_provider == "openai"
         and container.settings.image_provider == "openai"
@@ -68,16 +77,11 @@ async def generate(
                     "真实生成 API 预检失败："
                     + str(preflight.get("message", "连接失败")),
                 )
-    try:
-        container.orchestrator.characters.get(character_id)
-        image_template = container.character_templates.get_image_template(
-            image_template_id
-        )
-        video_style = container.character_templates.get_video_style(video_style_id)
-    except KeyError as exc:
-        raise HTTPException(400, str(exc)) from exc
     state = container.runs.create(
-        character_id, image_template_id, video_style_id, output_type
+        character_id,
+        prompt_plan.image_template.id,
+        prompt_plan.video_style.id,
+        prompt_plan.output_type,
     )
     input_path = container.assets.run_dir(state.run_id) / "input" / f"product{suffix}"
     try:
@@ -93,20 +97,12 @@ async def generate(
         container.assets.write_json(
             state.run_id,
             "analysis/generation_styles.json",
-            {
-                "image_template": {
-                    "id": image_template["id"],
-                    "name": image_template["name"],
-                    "category_id": image_template["category_id"],
-                    "output_kind": "task_image_template",
-                },
-                "video_style": {
-                    "id": video_style["id"],
-                    "name": video_style["name"],
-                    "category_id": video_style["category_id"],
-                    "output_kind": "video_style",
-                },
-            },
+            prompt_plan.public_metadata(),
+        )
+        container.assets.write_json(
+            state.run_id,
+            "prompts/generation_prompt_plan.json",
+            prompt_plan,
         )
         await container.runner.submit(
             state.run_id,
@@ -118,6 +114,8 @@ async def generate(
             "image_template_id": state.image_template_id,
             "video_style_id": state.video_style_id,
             "output_type": state.output_type,
+            "prompt_builder": prompt_plan.builder,
+            "prompt_input_applied": bool(prompt_plan.prompt_input),
         }
     finally:
         await product_image.close()

@@ -6,6 +6,7 @@ from app.services.asset_manager import AssetManager
 from app.services.run_manager import RunManager
 from app.services.character_registry import CharacterRegistry
 from app.services.character_template_catalog import CharacterTemplateCatalog
+from app.services.generation_prompt_builder import GenerationPromptBuilder
 from app.services.prompt_builder import PromptBuilder
 from app.services.ffmpeg_service import FFmpegService
 from app.agents.product_analyzer import ProductAnalyzer
@@ -43,6 +44,7 @@ class Container:
     relay_config: RelayConfigStore
     provider_manager: RuntimeProviderManager
     character_templates: CharacterTemplateCatalog
+    generation_prompts: GenerationPromptBuilder
 
 
 def build_container(settings: Settings) -> Container:
@@ -90,6 +92,7 @@ def build_container(settings: Settings) -> Container:
         settings.config_dir / "awesome_style_library.json",
         settings.config_dir / "character_image_templates.json",
     )
+    generation_prompts = GenerationPromptBuilder(character_templates)
     visual_qa = None
     if settings.vision_provider == "openai" and settings.openai_api_key:
         visual_qa = OpenAIVisualQAProvider(
@@ -101,7 +104,7 @@ def build_container(settings: Settings) -> Container:
     orchestrator = Orchestrator(
         analyzer, scene_router, motion_router, storyboard, image, ImageQA(qa_rules["image"], visual_qa),
         video, VideoQA(qa_rules["video"], visual_qa, ffmpeg), composer, CharacterRegistry(settings.character_dir),
-        PromptBuilder(settings.prompts_dir, video_generated_environment=settings.video_provider == "runway"), assets, runs, RetryPolicy(), character_templates,
+        PromptBuilder(settings.prompts_dir, video_generated_environment=settings.video_provider == "runway"), assets, runs, RetryPolicy(), generation_prompts,
         settings.max_concurrent_image_tasks, settings.max_concurrent_video_tasks,
     )
     provider_manager = RuntimeProviderManager(settings, relay_config, ffmpeg)
@@ -118,4 +121,5 @@ def build_container(settings: Settings) -> Container:
         relay_config,
         provider_manager,
         character_templates,
+        generation_prompts,
     )
