@@ -2,7 +2,7 @@
 
 Production hostname: `https://aifactorycreator.org`
 
-This application must be published through a Cloudflare Tunnel and protected by a Cloudflare Access self-hosted application. The backend contains provider credentials and generation endpoints that can consume paid API quota, so port `8000` must not be exposed directly to the Internet.
+This application is published through a Cloudflare Tunnel and protected by its own signed-cookie WebUI authentication. Do not attach a Cloudflare Access self-hosted application to this hostname: visitors must reach the WebUI login page directly. The backend contains provider credentials and generation endpoints that can consume paid API quota, so port `8000` must not be exposed directly to the Internet.
 
 ## Required routing
 
@@ -24,9 +24,9 @@ Example current-user startup command (the token file itself must remain outside 
 "C:\Program Files (x86)\cloudflared\cloudflared.exe" tunnel run --token-file "C:\Users\<user>\.cloudflared\ai-fashion-local.token"
 ```
 
-## Access policy
+## WebUI authentication
 
-Create a Cloudflare Access **self-hosted** application for the entire apex hostname `aifactorycreator.org`. Add an Allow policy for the intended administrator identity before publishing the tunnel hostname. Do not use a public Bypass rule.
+Set `WEBUI_AUTH_ENABLED=true`, `WEBUI_USERNAME`, and `WEBUI_PASSWORD` only in the ignored local `.env` file. The backend issues a signed HttpOnly, Secure cookie after login and protects API, media, and API documentation routes. Never commit the real password or session secret. The Cloudflare Zero Trust application list must not contain an Access application targeting `aifactorycreator.org`.
 
 ## Validation
 
@@ -45,9 +45,10 @@ cloudflared tunnel ingress rule https://aifactorycreator.org/
 cloudflared tunnel ingress rule https://aifactorycreator.org/api/v1/system/status
 ```
 
-After publication, verify that an unauthenticated browser is redirected to Cloudflare Access, then authenticate and check:
+After publication, verify:
 
-- `/` serves the Web UI over HTTPS.
-- `/health` returns the backend health response.
-- `/api/v1/style-catalog` returns JSON.
+- `/` serves the WebUI login page directly over HTTPS without a Cloudflare Access redirect.
+- An unauthenticated `/api/v1/system/status` request returns HTTP 401.
+- A valid WebUI login sets an HttpOnly, Secure cookie.
+- Authenticated `/api/v1/style-catalog` and `/api/v1/system/status` requests return JSON.
 - Existing generated images and videos load from `/media/...`.

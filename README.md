@@ -32,7 +32,7 @@ docker compose up --build -d
 
 The Web UI supports local split ports and a public same-origin deployment. On `localhost`/`127.0.0.1` it calls the backend on port `8000`; on a public hostname it uses the current HTTPS origin for API and media requests.
 
-The production hostname `aifactorycreator.org` must use a Cloudflare Tunnel with Cloudflare Access protection. See [deploy/cloudflare/README.md](deploy/cloudflare/README.md) for the routing, security, and validation checklist.
+The production hostname `aifactorycreator.org` uses a Cloudflare Tunnel and the application's own signed-cookie WebUI login. Cloudflare Access is intentionally not attached to this hostname, so visitors reach the WebUI login page directly. See [deploy/cloudflare/README.md](deploy/cloudflare/README.md) for the routing, authentication, and validation checklist.
 
 停止服务不会删除历史产物：
 
