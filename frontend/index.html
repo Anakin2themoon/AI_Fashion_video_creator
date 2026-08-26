@@ -4,23 +4,32 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Fashion Video Director</title>
-  <link rel="stylesheet" href="/styles.css?v=20260826-auth-on-demand" />
-  <link rel="stylesheet" href="/theme-override.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260826-auth-modal-v2" />
   <link rel="stylesheet" href="/provider-settings.css" />
   <link rel="stylesheet" href="/character-templates.css" />
+  <link rel="stylesheet" href="/theme-override.css?v=20260826-auth-modal-v2" />
 </head>
 <body>
   <div class="noise"></div>
-  <section id="loginGate" class="login-gate" aria-label="WebUI 登录">
-    <form id="loginForm" class="login-card">
+  <section id="loginGate" class="login-gate" aria-label="WebUI 登录" aria-hidden="true">
+    <form id="loginForm" class="login-card" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
       <button id="closeLogin" class="login-close" type="button" aria-label="关闭登录">×</button>
-      <span class="brand-mark">F</span>
-      <p class="eyebrow">SECURE WEBUI</p>
-      <h1>登录创作工作台</h1>
-      <label><span>账号</span><input id="loginUsername" name="username" autocomplete="username" required autofocus /></label>
-      <label><span>密码</span><input id="loginPassword" name="password" type="password" autocomplete="current-password" required /></label>
-      <button id="loginButton" class="primary" type="submit"><span>登录</span><b>→</b></button>
-      <p id="loginError" class="error" role="alert"></p>
+      <aside class="login-intro">
+        <span class="brand-mark">F</span>
+        <p class="eyebrow">AI FASHION · SECURE CREATION</p>
+        <h2>浏览无需登录，<br><em>创作需要授权。</em></h2>
+        <p>账号仅用于保护生成额度、API 配置和任务产物。</p>
+        <span class="login-security"><i></i> HTTPS · HttpOnly Session</span>
+      </aside>
+      <div class="login-form-content">
+        <p class="login-kicker">ACCOUNT ACCESS</p>
+        <h1 id="loginTitle">登录创作工作台</h1>
+        <p id="loginContext" class="login-context">此功能需要账号密码</p>
+        <label><span>账号</span><input id="loginUsername" name="username" autocomplete="username" placeholder="请输入账号" required /></label>
+        <label><span>密码</span><input id="loginPassword" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" required /></label>
+        <button id="loginButton" class="primary" type="submit"><span>验证并继续</span><b>→</b></button>
+        <p id="loginError" class="error" role="alert"></p>
+      </div>
     </form>
   </section>
   <header>
@@ -31,7 +40,7 @@
       <button data-view="runs" class="nav">任务</button>
       <button data-view="settings" class="nav">设置</button>
     </nav>
-    <button id="logoutButton" class="secondary logout-button" type="button" hidden>退出登录</button>
+    <button id="accountStatus" class="account-status" type="button" hidden title="退出登录"><i></i><span id="accountName">admin</span><small>已登录</small><b>退出</b></button>
     <div id="systemPill" class="system-pill"><i></i> 检测系统中</div>
   </header>
 
@@ -151,6 +160,6 @@
     </section>
   </main>
   <div id="toast" class="toast"></div>
-  <script src="/app.js?v=20260826-auth-on-demand"></script>
+  <script src="/app.js?v=20260826-auth-modal-v2"></script>
 </body>
 </html>

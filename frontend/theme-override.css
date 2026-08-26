@@ -6,3 +6,31 @@
 }
 
 .generation-notice.ready { color: var(--ok); }
+
+/* On-demand authentication modal. Loaded last to avoid stale/base overrides. */
+.login-gate{position:fixed!important;inset:0!important;display:none!important;place-items:center!important;padding:28px!important;z-index:1000!important;background:rgba(20,18,16,.66)!important;backdrop-filter:blur(18px) saturate(.8)!important}
+.auth-prompt{overflow:hidden}
+.auth-prompt .login-gate{display:grid!important;animation:authFade .18s ease-out}
+.login-card{position:relative!important;width:min(840px,calc(100vw - 40px))!important;max-height:calc(100vh - 48px)!important;display:grid!important;grid-template-columns:.9fr 1.1fr!important;gap:0!important;padding:0!important;overflow:auto!important;border:1px solid rgba(255,255,255,.16)!important;border-radius:26px!important;background:#f6f1e9!important;color:#191714!important;box-shadow:0 34px 110px rgba(0,0,0,.38)!important}
+.login-intro{display:flex;flex-direction:column;min-height:500px;padding:42px;background:#25211d;color:#f6f1e9}
+.login-intro .brand-mark{width:48px;height:56px;background:#f6f1e9;color:#25211d}
+.login-intro h2{margin:44px 0 18px;font:500 36px/1.06 Georgia,"Songti SC",serif;letter-spacing:-.03em}
+.login-intro h2 em{color:#e27a59;font-weight:400}
+.login-intro>p:not(.eyebrow){color:#bdb4a8;line-height:1.75}
+.login-security{margin-top:auto;font-size:11px;letter-spacing:.08em;color:#bdb4a8}
+.login-security i,.account-status i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#77a17f;margin-right:7px;box-shadow:0 0 0 4px rgba(119,161,127,.12)}
+.login-form-content{display:grid;align-content:center;gap:16px;padding:56px 52px}
+.login-kicker{margin:0;color:#cf5e3d;font-size:10px;font-weight:700;letter-spacing:.2em}
+.login-form-content h1{margin:0;font:500 38px/1.05 Georgia,"Songti SC",serif;letter-spacing:-.03em}
+.login-context{min-height:20px;margin:0 0 6px;color:#746e65;font-size:13px}
+.login-form-content label{display:grid;gap:7px;color:#746e65;font-size:12px}
+.login-form-content input{width:100%;height:50px;padding:0 15px;border:1px solid #d4ccc0;border-radius:12px;background:#fff;color:#191714;font-size:15px;outline:none}
+.login-form-content input:focus{border-color:#cf5e3d;box-shadow:0 0 0 4px rgba(207,94,61,.1)}
+.login-form-content .primary{margin-top:4px;border-radius:12px}
+.login-form-content .error{min-height:18px;margin:0}
+.login-close{position:absolute!important;top:16px!important;right:16px!important;z-index:2!important;width:36px!important;height:36px!important;border:1px solid rgba(25,23,20,.12)!important;border-radius:50%!important;background:rgba(255,255,255,.72)!important;color:#191714!important;cursor:pointer!important}
+.account-status{display:flex;align-items:center;gap:6px;border:1px solid #c6d6c9;border-radius:30px;padding:8px 12px;background:#edf4ee;color:#36533c;cursor:pointer;white-space:nowrap}
+.account-status[hidden]{display:none}
+.account-status small{font-size:10px;color:#65806a}.account-status b{margin-left:4px;font-size:10px;font-weight:500;color:#8b6a63}
+@keyframes authFade{from{opacity:0}to{opacity:1}}
+@media(max-width:720px){.login-gate{padding:14px!important}.login-card{grid-template-columns:1fr!important;width:min(460px,calc(100vw - 20px))!important}.login-intro{display:none}.login-form-content{padding:58px 28px 34px}.login-form-content h1{font-size:32px}}
