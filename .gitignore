@@ -12,3 +12,5 @@ tools/
 *.token
 .cloudflared/
 .DS_Store
+.wrangler/
+node_modules/

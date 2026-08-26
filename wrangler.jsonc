@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-fashion-video-creator",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-26",
+  "assets": {
+    "directory": "./frontend",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/media/*",
+      "/health",
+      "/docs/*",
+      "/redoc/*",
+      "/openapi.json"
+    ],
+    "not_found_handling": "single-page-application"
+  },
+  "vars": {
+    "BACKEND_ORIGIN": "https://origin.aifactorycreator.org"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
