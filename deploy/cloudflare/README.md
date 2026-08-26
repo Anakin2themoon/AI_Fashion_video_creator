@@ -2,7 +2,7 @@
 
 Production hostname: `https://aifactorycreator.org`
 
-This application is published through a Cloudflare Tunnel and protected by its own signed-cookie WebUI authentication. Do not attach a Cloudflare Access self-hosted application to this hostname: visitors must reach the WebUI login page directly. The backend contains provider credentials and generation endpoints that can consume paid API quota, so port `8000` must not be exposed directly to the Internet.
+This application is published through a Cloudflare Tunnel and uses its own on-demand signed-cookie WebUI authentication. Do not attach a Cloudflare Access self-hosted application to this hostname. Visitors may browse the WebUI and public style catalog without logging in; generation, task output, media, and API configuration remain protected. The backend contains provider credentials and generation endpoints that can consume paid API quota, so port `8000` must not be exposed directly to the Internet.
 
 ## Required routing
 
@@ -26,7 +26,7 @@ Example current-user startup command (the token file itself must remain outside 
 
 ## WebUI authentication
 
-Set `WEBUI_AUTH_ENABLED=true`, `WEBUI_USERNAME`, and `WEBUI_PASSWORD` only in the ignored local `.env` file. The backend issues a signed HttpOnly, Secure cookie after login and protects API, media, and API documentation routes. Never commit the real password or session secret. The Cloudflare Zero Trust application list must not contain an Access application targeting `aifactorycreator.org`.
+Set `WEBUI_AUTH_ENABLED=true`, `WEBUI_USERNAME`, and `WEBUI_PASSWORD` only in the ignored local `.env` file. The backend issues a signed HttpOnly, Secure cookie after login. Public browsing endpoints include system readiness, style catalog, character template catalog, and provider model catalog. Generation requests, generated runs/media, provider configuration, runtime settings, and API documentation require authentication. Never commit the real password or session secret. The Cloudflare Zero Trust application list must not contain an Access application targeting `aifactorycreator.org`.
 
 ## Validation
 
@@ -47,8 +47,10 @@ cloudflared tunnel ingress rule https://aifactorycreator.org/api/v1/system/statu
 
 After publication, verify:
 
-- `/` serves the WebUI login page directly over HTTPS without a Cloudflare Access redirect.
-- An unauthenticated `/api/v1/system/status` request returns HTTP 401.
+- `/` serves the browsable WebUI directly over HTTPS without a Cloudflare Access redirect or immediate login prompt.
+- Unauthenticated `/api/v1/system/status` and `/api/v1/style-catalog` requests return JSON.
+- Attempting to generate, view runs, or open API settings prompts for the WebUI account.
+- An unauthenticated `/api/v1/generate` or `/api/v1/provider-config` request returns HTTP 401.
 - A valid WebUI login sets an HttpOnly, Secure cookie.
 - Authenticated `/api/v1/style-catalog` and `/api/v1/system/status` requests return JSON.
 - Existing generated images and videos load from `/media/...`.

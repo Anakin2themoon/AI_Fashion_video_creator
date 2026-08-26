@@ -127,14 +127,18 @@ async def test_webui_login_protects_api_and_uses_http_only_cookie(tmp_path: Path
     )
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
-        protected = await client.get("/api/v1/system/status")
+        public_status = await client.get("/api/v1/system/status")
+        public_catalog = await client.get("/api/v1/style-catalog")
+        protected = await client.get("/api/v1/provider-config")
         bad_login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "wrong"})
         login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "test-password"})
-        authenticated = await client.get("/api/v1/system/status")
+        authenticated = await client.get("/api/v1/provider-config")
         session = await client.get("/api/v1/auth/session")
         logout = await client.post("/api/v1/auth/logout")
-        protected_again = await client.get("/api/v1/system/status")
+        protected_again = await client.get("/api/v1/provider-config")
 
+    assert public_status.status_code == 200
+    assert public_catalog.status_code == 200
     assert protected.status_code == 401
     assert bad_login.status_code == 401
     assert login.status_code == 200

@@ -67,12 +67,28 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="AI Fashion Video Director", version="0.1.0", lifespan=lifespan)
     app.state.container = container
-    protected_prefixes = ("/api/v1", "/api/v4", "/media", "/docs", "/redoc", "/openapi.json")
     public_auth_paths = {"/api/v1/auth/login", "/api/v1/auth/session", "/api/v1/auth/logout"}
+
+    def is_protected_request(request: Request) -> bool:
+        path = request.url.path
+        api_path = path.removeprefix("/api/v1").removeprefix("/api/v4")
+        if path.startswith(("/media", "/docs", "/redoc", "/openapi.json")):
+            return True
+        if api_path.startswith("/runs"):
+            return True
+        if api_path == "/generate":
+            return True
+        if api_path.startswith(("/character-templates/", "/image-templates/")) and api_path.endswith("/generate"):
+            return True
+        if api_path.startswith("/provider-config") and api_path != "/provider-config/catalog":
+            return True
+        if api_path.startswith(("/runtime-config", "/settings")):
+            return True
+        return False
 
     @app.middleware("http")
     async def require_webui_session(request: Request, call_next):
-        protected = request.url.path.startswith(protected_prefixes)
+        protected = is_protected_request(request)
         if (
             settings.webui_auth_enabled
             and protected

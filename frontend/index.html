@@ -4,15 +4,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Fashion Video Director</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=20260826-auth-on-demand" />
   <link rel="stylesheet" href="/theme-override.css" />
   <link rel="stylesheet" href="/provider-settings.css" />
   <link rel="stylesheet" href="/character-templates.css" />
 </head>
-<body class="auth-locked">
+<body>
   <div class="noise"></div>
   <section id="loginGate" class="login-gate" aria-label="WebUI 登录">
     <form id="loginForm" class="login-card">
+      <button id="closeLogin" class="login-close" type="button" aria-label="关闭登录">×</button>
       <span class="brand-mark">F</span>
       <p class="eyebrow">SECURE WEBUI</p>
       <h1>登录创作工作台</h1>
@@ -30,7 +31,7 @@
       <button data-view="runs" class="nav">任务</button>
       <button data-view="settings" class="nav">设置</button>
     </nav>
-    <button id="logoutButton" class="secondary logout-button" type="button">退出登录</button>
+    <button id="logoutButton" class="secondary logout-button" type="button" hidden>退出登录</button>
     <div id="systemPill" class="system-pill"><i></i> 检测系统中</div>
   </header>
 
@@ -150,6 +151,6 @@
     </section>
   </main>
   <div id="toast" class="toast"></div>
-  <script src="/app.js"></script>
+  <script src="/app.js?v=20260826-auth-on-demand"></script>
 </body>
 </html>
