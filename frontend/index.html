@@ -9,8 +9,19 @@
   <link rel="stylesheet" href="/provider-settings.css" />
   <link rel="stylesheet" href="/character-templates.css" />
 </head>
-<body>
+<body class="auth-locked">
   <div class="noise"></div>
+  <section id="loginGate" class="login-gate" aria-label="WebUI 登录">
+    <form id="loginForm" class="login-card">
+      <span class="brand-mark">F</span>
+      <p class="eyebrow">SECURE WEBUI</p>
+      <h1>登录创作工作台</h1>
+      <label><span>账号</span><input id="loginUsername" name="username" autocomplete="username" required autofocus /></label>
+      <label><span>密码</span><input id="loginPassword" name="password" type="password" autocomplete="current-password" required /></label>
+      <button id="loginButton" class="primary" type="submit"><span>登录</span><b>→</b></button>
+      <p id="loginError" class="error" role="alert"></p>
+    </form>
+  </section>
   <header>
     <a class="brand" href="#generate"><span class="brand-mark">F</span><span>AI Fashion<br><small>VIDEO DIRECTOR</small></span></a>
     <nav>
@@ -19,6 +30,7 @@
       <button data-view="runs" class="nav">任务</button>
       <button data-view="settings" class="nav">设置</button>
     </nav>
+    <button id="logoutButton" class="secondary logout-button" type="button">退出登录</button>
     <div id="systemPill" class="system-pill"><i></i> 检测系统中</div>
   </header>
 

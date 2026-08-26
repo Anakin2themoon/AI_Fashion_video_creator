@@ -18,6 +18,7 @@ def build_app(tmp_path: Path):
             image_provider="unconfigured",
             video_provider="unconfigured",
             allow_mock_generation=False,
+            webui_auth_enabled=False,
         )
     )
 
@@ -110,3 +111,35 @@ async def test_each_capability_key_can_be_saved_and_deleted_independently(
     assert "VISION-ONLY-KEY" not in combined
     assert "IMAGE-ONLY-KEY" not in combined
     assert "VIDEO-ONLY-KEY" not in combined
+
+
+@pytest.mark.asyncio
+async def test_webui_login_protects_api_and_uses_http_only_cookie(tmp_path: Path):
+    root = Path(__file__).resolve().parent.parent
+    app = create_app(
+        Settings(
+            workspace_dir=tmp_path / "workspace",
+            character_dir=root / "characters",
+            webui_auth_enabled=True,
+            webui_username="admin",
+            webui_password="test-password",
+        )
+    )
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        protected = await client.get("/api/v1/system/status")
+        bad_login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "wrong"})
+        login = await client.post("/api/v1/auth/login", json={"username": "admin", "password": "test-password"})
+        authenticated = await client.get("/api/v1/system/status")
+        session = await client.get("/api/v1/auth/session")
+        logout = await client.post("/api/v1/auth/logout")
+        protected_again = await client.get("/api/v1/system/status")
+
+    assert protected.status_code == 401
+    assert bad_login.status_code == 401
+    assert login.status_code == 200
+    assert "httponly" in login.headers["set-cookie"].lower()
+    assert authenticated.status_code == 200
+    assert session.json() == {"authenticated": True, "username": "admin"}
+    assert logout.status_code == 200
+    assert protected_again.status_code == 401

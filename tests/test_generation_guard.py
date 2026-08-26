@@ -21,6 +21,7 @@ async def test_real_generation_requires_all_three_configured_apis(tmp_path: Path
             openai_api_key="test-openai-key",
             video_provider="ffmpeg_camera",
             allow_mock_generation=False,
+            webui_auth_enabled=False,
         )
     )
     transport = httpx.ASGITransport(app=app)
@@ -50,6 +51,7 @@ async def test_provider_names_cannot_bypass_real_generation_gate(tmp_path: Path)
             image_provider="openai",
             video_provider="relay",
             allow_mock_generation=False,
+            webui_auth_enabled=False,
         )
     )
     transport = httpx.ASGITransport(app=app)
@@ -79,6 +81,7 @@ async def test_real_generation_rejects_model_group_mismatch_before_creating_run(
             image_provider="unconfigured",
             video_provider="unconfigured",
             allow_mock_generation=False,
+            webui_auth_enabled=False,
         )
     )
     container = app.state.container

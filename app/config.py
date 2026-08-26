@@ -37,6 +37,10 @@ class Settings(BaseModel):
     max_concurrent_runs: int = 1
     max_concurrent_image_tasks: int = 2
     max_concurrent_video_tasks: int = 1
+    webui_auth_enabled: bool = False
+    webui_username: str = "admin"
+    webui_password: str = ""
+    webui_session_secret: str = ""
 
     def __init__(self, **data):
         env_file = ROOT / ".env"
