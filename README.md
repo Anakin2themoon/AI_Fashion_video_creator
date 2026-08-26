@@ -76,7 +76,7 @@ NoToken 只出现在视频生成服务商列表中。视觉、换装、视频三
 
 快跑视频模型在 WebUI 中按系列分组显示：
 
-- Seedance：`doubao-seedance-2.0-mini-480p`、`doubao-seedance-2.0-mini-720p`、`doubao-seedance-2.5-480p`、`doubao-seedance-2.5-720p`
+- Seedance：`doubao-seedance-2.0-1080p`、`doubao-seedance-2.0-480p`、`doubao-seedance-2.0-720p`、`doubao-seedance-2.0-fast-480p`、`doubao-seedance-2.0-fast-720p`、`doubao-seedance-2.0-mini`、`doubao-seedance-2.0-mini-480p`、`doubao-seedance-2.0-mini-720p`、`doubao-seedance-2.5-480p`、`doubao-seedance-2.5-720p`
 - Grok Video：`grok-imagine-video`、`grok-imagine-video-1.5-preview`
 - Sora：`sora-2`、`sora-2-8s`、`sora-2-12s`
 - Veo：`veo_3_1`、`veo_3_1-fast`

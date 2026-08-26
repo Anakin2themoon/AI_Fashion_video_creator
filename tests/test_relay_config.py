@@ -39,6 +39,12 @@ def test_capabilities_have_independent_provider_catalogs(tmp_path: Path):
         "nano-banana-2-1k",
     ]
     assert video["kuaipao"]["models"] == [
+        "doubao-seedance-2.0-1080p",
+        "doubao-seedance-2.0-480p",
+        "doubao-seedance-2.0-720p",
+        "doubao-seedance-2.0-fast-480p",
+        "doubao-seedance-2.0-fast-720p",
+        "doubao-seedance-2.0-mini",
         "doubao-seedance-2.0-mini-480p",
         "doubao-seedance-2.0-mini-720p",
         "doubao-seedance-2.5-480p",

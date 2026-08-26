@@ -29,6 +29,12 @@
         "nano-banana-2-1k"
       ],
       "video": [
+        "doubao-seedance-2.0-1080p",
+        "doubao-seedance-2.0-480p",
+        "doubao-seedance-2.0-720p",
+        "doubao-seedance-2.0-fast-480p",
+        "doubao-seedance-2.0-fast-720p",
+        "doubao-seedance-2.0-mini",
         "doubao-seedance-2.0-mini-480p",
         "doubao-seedance-2.0-mini-720p",
         "doubao-seedance-2.5-480p",
@@ -48,6 +54,12 @@
           "id": "seedance",
           "label": "Seedance",
           "models": [
+            "doubao-seedance-2.0-1080p",
+            "doubao-seedance-2.0-480p",
+            "doubao-seedance-2.0-720p",
+            "doubao-seedance-2.0-fast-480p",
+            "doubao-seedance-2.0-fast-720p",
+            "doubao-seedance-2.0-mini",
             "doubao-seedance-2.0-mini-480p",
             "doubao-seedance-2.0-mini-720p",
             "doubao-seedance-2.5-480p",
