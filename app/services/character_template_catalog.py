@@ -10,30 +10,18 @@ DEFAULT_VIDEO_STYLE_ID = "video-cat-photo"
 
 
 VIDEO_ADAPTATIONS = {
-    "cat-ui": "live-action fashion footage with restrained editorial interface overlays, clean grids, and precise modern framing",
-    "cat-infographic": "clear visual storytelling, ordered compositions, deliberate camera moves, and subtle diagram-like spatial rhythm without readable overlay text",
-    "cat-poster": "bold campaign composition, graphic negative space, decisive silhouettes, and premium fashion-poster color blocking",
-    "cat-product": "commercial product-first fashion film, crisp garment materials, controlled highlights, and clear clothing detail",
-    "cat-brand": "coherent campaign palette, recognizable recurring visual motifs, premium brand-film continuity, and minimal visual clutter",
-    "cat-architecture": "architecture-led cinematography with strong lines, spatial depth, realistic materials, and human-scale movement",
-    "cat-photo": "photorealistic editorial photography, natural skin texture, believable lens behavior, soft cinematic daylight, and restrained film grain",
-    "cat-illustration": "live-action footage with a refined illustrative color language and art-directed composition while keeping the person and garment photorealistic",
-    "cat-character": "identity-led character cinematography with consistent face, hair, body proportions, costume details, and readable full-body motion",
-    "cat-scene": "cinematic narrative continuity, motivated camera movement, environmental storytelling, and clear emotional beats",
-    "cat-history": "classical visual rhythm, restrained traditional color harmony, graceful movement, and historically inspired composition without changing the selected garment",
-    "cat-document": "clean chapter-like visual structure, stable framing, ordered shot progression, and publication-grade composition without text overlays",
-    "cat-other": "experimental but controlled creative direction, coherent material logic, and one consistent visual system across all shots",
+    "cat-photo": "photorealistic Asian daily-life fashion footage, consistent face and body, faithful garment construction and fabric texture, natural full-body motion, believable lens behavior, soft cinematic daylight, and restrained film grain",
 }
 
 
 class CharacterTemplateCatalog:
-    """Full awesome-gpt-image-2 category/template catalog adapted for fashion use."""
+    """Focused photorealistic fashion try-on image and video catalog."""
 
     def __init__(self, config_path: Path, legacy_overrides_path: Path | None = None):
         payload = json.loads(config_path.read_text(encoding="utf-8"))
         self.source: dict[str, Any] = {
-            "name": "awesome-gpt-image-2",
-            "repository": "https://github.com/270438469/awesome-gpt-image-2",
+            "name": "AI Fashion Try-on Core",
+            "repository": "https://github.com/Anakin2themoon/AI_Fashion_video_creator",
             "upstream": str(payload.get("repository", "https://github.com/freestylefly/awesome-gpt-image-2")),
             "license": "MIT",
             "version": payload.get("version", 1),
@@ -51,23 +39,9 @@ class CharacterTemplateCatalog:
             self._categories[category["id"]] = category
             self._category_by_value[category["value"]] = category["id"]
 
-        overrides: dict[str, dict[str, Any]] = {}
-        extensions: list[dict[str, Any]] = []
-        if legacy_overrides_path and legacy_overrides_path.exists():
-            legacy = json.loads(legacy_overrides_path.read_text(encoding="utf-8"))
-            upstream_ids = {raw["id"] for raw in payload["templates"]}
-            for item in legacy.get("templates", []):
-                if item["id"] in upstream_ids:
-                    overrides[item["id"]] = dict(item)
-                else:
-                    extensions.append(dict(item))
-
         self._templates: dict[str, dict[str, Any]] = {}
         for raw in payload["templates"]:
-            template = self._adapt_template(dict(raw), overrides.get(raw["id"]))
-            self._templates[template["id"]] = template
-        for raw in extensions:
-            template = self._adapt_extension(raw)
+            template = self._adapt_template(dict(raw), None)
             self._templates[template["id"]] = template
 
         self._video_styles = {
@@ -152,12 +126,19 @@ class CharacterTemplateCatalog:
                 f"{guidance} Avoid: {pitfalls}"
             ),
         }
-        if raw["id"] == "street-accident-moment":
+        if raw["id"] == "realistic-photography":
             template["art_direction"] = (
-                "Selected image template: Safe Candid Street Moment Photography. "
-                "Create a believable spontaneous everyday street-fashion moment with natural phone-camera framing, "
-                "subtle motion blur and documentary realism. The moment is completely safe: no accident, collision, "
-                "injury, distress, violence, dangerous behavior or damaged property. Avoid staged advertising light."
+                "Selected image template: Premium Studio Fashion Try-on. Create one photorealistic full-body fashion "
+                "portrait on a clean premium studio set. Make the transferred garment silhouette, construction, seams, "
+                "materials and fine texture crisp and easy to inspect. Use natural skin texture, accurate anatomy, soft "
+                "commercial lighting and restrained styling without accessories that hide the garment."
+            )
+        elif raw["id"] == "daily-life-fashion":
+            template["art_direction"] = (
+                "Selected image template: Asian Daily-life Fashion Try-on. Create one believable full-body fashion "
+                "portrait in a contemporary Asian everyday environment. Use natural movement, realistic daylight, "
+                "subtle environmental depth and premium lifestyle photography while keeping every garment detail fully "
+                "readable. No tourist landmark, fantasy scenery, unrelated prop or dramatic visual effect."
             )
         template["prompt"] = self._standalone_prompt(template)
         if override:
@@ -166,29 +147,14 @@ class CharacterTemplateCatalog:
                     template[key] = override[key]
         return template
 
-    def _adapt_extension(self, raw: dict[str, Any]) -> dict[str, Any]:
-        category_id = "cat-character"
-        return {
-            **raw,
-            "name_en": "4x4 Action Breakdown Sheet",
-            "category": self._categories[category_id]["value"],
-            "category_id": category_id,
-            "cover": "/assets/style-library/case347.jpg",
-            "styles": ["Character", "Pose", "Infographic"],
-            "scenes": ["Story", "Fashion"],
-            "tags": ["Character", "Motion", "Reference"],
-            "art_direction": "Selected image template: 4x4 Action Breakdown Sheet. Keep exactly 16 ordered panels, identity, outfit, proportions and hairstyle consistent.",
-            "source_extension": True,
-        }
-
     def _build_video_style(self, category: dict[str, Any]) -> dict[str, Any]:
         style_id = f"video-{category['id']}"
         return {
             "id": style_id,
             "category_id": category["id"],
-            "name": f"{category['name']}视频风格",
-            "name_en": f"{category['name_en']} Video Style",
-            "summary": category["summary"],
+            "name": "亚洲日常写实时装片",
+            "name_en": "Photorealistic Asian Daily-life Fashion Film",
+            "summary": "围绕同一人物和上传衣服，生成真实亚洲日常环境中的高清 18 秒时装视频。",
             "cover": category["cover"],
             "art_direction": "Selected video style: "
             + VIDEO_ADAPTATIONS[category["id"]]
@@ -196,22 +162,16 @@ class CharacterTemplateCatalog:
         }
 
     def _standalone_prompt(self, template: dict[str, Any]) -> str:
-        prompt_name = (
-            "Safe Candid Street Moment Photography"
-            if template["id"] == "street-accident-moment"
-            else template["name_en"]
-        )
+        prompt_name = template["name_en"]
         return (
             f"Create one polished {prompt_name} image using the uploaded adult East Asian woman "
             "as the only human identity reference. Preserve her exact recognizable face, facial proportions, "
             "adult age, natural skin texture, long straight black hair and body proportions. Keep her current "
-            "simple white tank top, black leggings and nude heels recognizable unless the selected template "
-            "requires a stylized material translation; never replace her with another person. "
+            "current clothing recognizable; never replace her with another person. "
             + template["art_direction"]
-            + " Make the recurring woman the clear visual anchor even in interface, diagram, product, brand, "
-            "architecture, publication or scene layouts. Use a coherent premium composition, readable hierarchy, "
-            "correct anatomy and consistent identity. No extra human identity, no watermark, no copied brand, "
-            "no gibberish text, no deformed hands or feet. Output one complete image."
+            + " Make the recurring woman and the selected garment the only visual anchors. Use a coherent premium "
+            "fashion composition, correct anatomy, realistic skin and fabric, and consistent identity. No unrelated "
+            "person or object, no watermark, no copied brand, no text, no deformed hands or feet. Output one complete image."
         )
 
     @staticmethod
@@ -226,15 +186,11 @@ class CharacterTemplateCatalog:
 
     @staticmethod
     def _category_cover(value: str) -> str:
-        return "/assets/style-library/category-covers/" + Path(value).name
+        return "/assets/style-library/" + Path(value).name
 
     @staticmethod
     def _aspect_ratio(category_id: str, template_id: str) -> str:
-        if template_id in {"action-breakdown-sheet", "infographic-engine"}:
-            return "1:1"
-        if category_id in {"cat-poster", "cat-photo", "cat-character", "cat-history"}:
-            return "2:3"
-        return "1:1"
+        return "2:3"
 
     @staticmethod
     def _size(category_id: str, template_id: str) -> str:

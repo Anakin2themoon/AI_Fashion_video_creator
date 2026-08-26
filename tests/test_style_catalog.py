@@ -16,19 +16,35 @@ def catalog() -> CharacterTemplateCatalog:
     )
 
 
-def test_full_upstream_catalog_and_independent_video_styles():
+def test_focused_fashion_catalog_and_independent_video_style():
     public = catalog().public_catalog()
 
-    assert public["source"]["category_count"] == 13
-    assert public["source"]["upstream_template_count"] == 22
-    assert len(public["categories"]) == 13
-    assert len(public["image_templates"]) == 23
-    assert len(public["video_styles"]) == 13
+    assert public["source"]["category_count"] == 1
+    assert public["source"]["upstream_template_count"] == 2
+    assert len(public["categories"]) == 1
+    assert len(public["image_templates"]) == 2
+    assert len(public["video_styles"]) == 1
     assert {item["category_id"] for item in public["image_templates"]} == {
         item["id"] for item in public["categories"]
     }
     assert all("prompt" not in item for item in public["image_templates"])
     assert all(item["id"].startswith("video-cat-") for item in public["video_styles"])
+
+
+def test_only_core_fashion_showcase_assets_remain():
+    asset_root = ROOT / "frontend" / "assets"
+    remaining = {
+        path.relative_to(asset_root).as_posix()
+        for path in asset_root.rglob("*")
+        if path.is_file()
+    }
+
+    assert remaining == {
+        "style-library/fashion-daily-life.png",
+        "style-library/fashion-studio.png",
+    }
+    for item in catalog().public_catalog()["image_templates"]:
+        assert (ROOT / "frontend" / item["cover"].removeprefix("/")).is_file()
 
 
 def test_task_image_prompt_excludes_non_garment_theme_elements():
@@ -72,9 +88,7 @@ def test_image_template_and_video_style_are_added_to_different_prompts():
         "lighting": "soft daylight",
     }
     motion = {"description": "relaxed standing pose"}
-    plan = generation_builder.build(
-        "poster-layout-system", "video-cat-scene", "video"
-    )
+    plan = generation_builder.build("daily-life-fashion", "video-cat-photo", "video")
 
     image_prompt = builder.image_prompt(
         analysis,
@@ -91,8 +105,8 @@ def test_image_template_and_video_style_are_added_to_different_prompts():
     )
 
     assert "TASK IMAGE TEMPLATE" in image_prompt
-    assert "Selected image template: Poster Layout System" in image_prompt
+    assert "Selected image template: Asian Daily-life Fashion Try-on" in image_prompt
     assert "VIDEO STYLE" not in image_prompt
     assert "VIDEO STYLE" in video_prompt
-    assert "cinematic narrative continuity" in video_prompt
+    assert "photorealistic Asian daily-life fashion footage" in video_prompt
     assert "TASK IMAGE TEMPLATE" not in video_prompt

@@ -4,10 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>AI Fashion Video Director</title>
-  <link rel="stylesheet" href="/styles.css?v=20260826-creation-flow-v3" />
+  <link rel="stylesheet" href="/styles.css?v=20260826-fashion-core-v4" />
   <link rel="stylesheet" href="/provider-settings.css" />
-  <link rel="stylesheet" href="/character-templates.css" />
-  <link rel="stylesheet" href="/theme-override.css?v=20260826-creation-flow-v3" />
+  <link rel="stylesheet" href="/character-templates.css?v=20260826-fashion-core-v4" />
+  <link rel="stylesheet" href="/theme-override.css?v=20260826-fashion-core-v4" />
 </head>
 <body>
   <div class="noise"></div>
@@ -36,7 +36,7 @@
     <a class="brand" href="#generate"><span class="brand-mark">F</span><span>AI Fashion<br><small>VIDEO DIRECTOR</small></span></a>
     <nav>
       <button data-view="generate" class="nav active">创作</button>
-      <button data-view="templates" class="nav">人物模板</button>
+      <button data-view="templates" class="nav">换装样片</button>
       <button data-view="runs" class="nav">任务</button>
       <button data-view="settings" class="nav">设置</button>
     </nav>
@@ -63,10 +63,9 @@
             </div>
           </label>
           <div class="generation-style-controls">
-            <div class="style-control-head"><strong>任务风格</strong><small>图片模板与视频风格相互独立</small></div>
-            <label><span>生成类型</span><select id="creationOutputType" required><option value="image" selected>仅生成图片模板</option><option value="video">生成 18S 视频</option></select></label>
-            <label><span>图片 Category</span><select id="creationImageCategory" required></select></label>
-            <label><span>任务图片模板</span><select id="creationImageTemplate" required></select></label>
+            <div class="style-control-head"><strong>换装创作</strong><small>仅保留高清写实图片与 18S 视频主链路</small></div>
+            <label><span>生成类型</span><select id="creationOutputType" required><option value="image" selected>生成高清换装图片</option><option value="video">生成 18S 换装视频</option></select></label>
+            <label><span>换装图片质感</span><select id="creationImageTemplate" required></select></label>
             <label id="creationVideoStyleLabel"><span>视频风格</span><select id="creationVideoStyle" required></select></label>
             <label class="prompt-input-control"><span>补充创作要求（可选）</span><textarea id="creationPromptInput" maxlength="2000" rows="3" placeholder="例如：自然晨光、轻松周末氛围。Prompt Builder 会保留人物与衣服锁定规则。"></textarea></label>
             <p class="prompt-builder-note">Prompt Input → Prompt Builder → Generate Handler；图片与视频生成接口保持原样。</p>
@@ -89,10 +88,10 @@
 
     <section id="templatesView" class="view">
       <div class="section-head">
-        <div><p class="eyebrow">13 CATEGORIES · 22 UPSTREAM TEMPLATES · MIT</p><h2>完整图片模板库</h2></div>
+        <div><p class="eyebrow">FASHION TRY-ON · PHOTOREALISTIC ONLY</p><h2>高清换装样片</h2></div>
       </div>
-      <p class="template-intro">这里仅用于浏览图片类型、构图和视觉方向，不在模板库直接生成。选择喜欢的模板后前往“创作”页面，上传当前衣服并统一提交图片或视频任务。</p>
-      <div class="template-toolbar"><label><span>按 Category 筛选</span><select id="templateCategoryFilter"></select></label><strong id="templateCount"></strong></div>
+      <p class="template-intro">这里只展示与主流程直接相关的写实换装效果：固定同一人物身份，根据上传衣服生成高清棚拍图片或亚洲日常生活图片与视频。没有海报、插画、3D 玩具、UI、Logo 或其他无关素材。</p>
+      <div class="template-toolbar"><strong id="templateCount"></strong></div>
       <div id="templateGrid" class="template-grid"><p class="settings-note">正在读取模板目录…</p></div>
     </section>
 
@@ -153,6 +152,6 @@
     </section>
   </main>
   <div id="toast" class="toast"></div>
-  <script src="/app.js?v=20260826-creation-flow-v3"></script>
+  <script src="/app.js?v=20260826-fashion-core-v4"></script>
 </body>
 </html>

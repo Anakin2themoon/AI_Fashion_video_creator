@@ -44,9 +44,9 @@ docker compose down
 
 1. 在“设置”页分别配置视觉分析、换装图片、视频生成三个 API；每项独立选择服务商、模型和 API Key。
 2. 点击“保存三个独立配置”；三个 Key 会按能力分别在本机加密保存，页面和 GET API 只显示各自掩码。
-3. 在“创作”页选择生成类型、图片 Category、任务图片模板和独立的视频风格，再拖入 JPG、PNG 或 WebP 衣服商品图片。
+3. 在“创作”页选择高清棚拍或亚洲日常生活换装质感，再选择生成图片或 18S 视频，并拖入 JPG、PNG 或 WebP 衣服商品图片。
 4. 可填写“补充创作要求”。本地 Prompt Builder 会把该输入与图片模板、视频风格编译成提示词计划，同时保留人物、衣服和安全锁定规则。
-5. 选择“仅生成图片模板”时只调用换装图片 API；选择“生成 18S 视频”时再调用视觉分析和视频 API。图片与视频使用各自的编排步骤显示实时进度，完成后可直接在 WebUI 下载 PNG 或 MP4。未登录时点击生成会弹出账号密码登录框，登录成功后自动继续刚才的任务。
+5. 选择“生成高清换装图片”时只调用换装图片 API；选择“生成 18S 换装视频”时再调用视觉分析和视频 API。图片与视频使用各自的编排步骤显示实时进度，完成后可直接在 WebUI 下载 PNG 或 MP4。未登录时点击生成会弹出账号密码登录框，登录成功后自动继续刚才的任务。
 
 Prompt Builder 是生成 handler 前的一层纯提示词编译服务，不替换或重构现有 image/video provider：
 
@@ -70,7 +70,7 @@ Prompt Input + Image Template + Video Style
 python scripts/self_test_prompt_builder.py --output workspace\prompt_builder_selftest\latest
 ```
 
-“人物模板”页集成了上游完整风格库：13 个 Category、22 个上游图片模板，以及 1 个本项目扩展的 4×4 动作分解模板，共 23 个展示模板。Category、任务图片模板和视频风格是三个不同层级；13 个视频风格与图片模板相互独立。模板库只负责浏览与选择，不直接调用任何生成 API；选择模板后会回到“创作”页，由用户上传当前衣服并统一提交图片或视频任务。
+“换装样片”页只保留两条与产品主路径直接相关的写实方向：高清棚拍换装和亚洲日常生活换装。UI、信息图、海报、Logo、建筑、插画、3D 玩具、历史出版物及动作分解表等无关模板和素材已删除。样片页只负责展示与选择；所有图片和视频生成统一回到“创作”页完成。
 
 NoToken 只出现在视频生成服务商列表中。视觉、换装、视频三条路由互不绑定：例如可以选择快跑视觉、OpenAI 换装、NoToken Seedance 视频，并为三项输入完全不同的 Key。
 
@@ -156,7 +156,7 @@ fullbody_side.png
 
 运行时配置 API 同时提供 `/api/v1` 和 `/api/v4` 前缀：`provider-config/catalog`、`provider-config`、`provider-config/test`、`runtime-config`。任何响应都不包含完整 API Key。
 
-图片风格目录、13 个 Category 封面和 22 个模板封面来自 [awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2)，依据 MIT License 使用。同步的目录保存在 `config/awesome_style_library.json`，本项目的提示词覆盖与扩展模板保存在 `config/character_image_templates.json`。
+换装目录已收敛到 `config/awesome_style_library.json` 中的两个写实模板。网页样片由项目内置图片生成能力基于固定亚洲人物身份参考生成；不再加载原上游通用模板封面。目录结构保留 [awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2) 的 MIT 来源说明。
 
 ## 测试
 
@@ -165,14 +165,6 @@ fullbody_side.png
 ```bash
 docker compose run --rm backend sh -lc "pip install -e '.[test]' && pytest -q"
 ```
-
-只调用图片 API、逐个验证全部 23 个模板（不生成视频）：
-
-```powershell
-python scripts/self_test_image_templates.py --concurrency 3 --output workspace\image_template_selftest\latest
-```
-
-脚本会从本地 API 拉取完整目录，逐模板生成并用 Pillow 解码验证，最后写入 `summary.json`；报告中的 `video_invoked` 必须为 `false`。
 
 Mock 端到端 API 烟雾测试前，仅在测试环境设置 `ALLOW_MOCK_GENERATION=true`，然后使用：
 

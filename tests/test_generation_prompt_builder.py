@@ -32,16 +32,16 @@ def builder() -> GenerationPromptBuilder:
 
 def test_builder_compiles_prompt_input_and_keeps_style_channels_separate():
     plan = builder().build(
-        "poster-layout-system",
-        "video-cat-scene",
+        "daily-life-fashion",
+        "video-cat-photo",
         "video",
         "Natural morning light and a relaxed weekend mood.",
     )
 
     assert plan.builder == "generation_prompt_builder"
     assert plan.output_type == "video"
-    assert plan.image_template.id == "poster-layout-system"
-    assert plan.video_style.id == "video-cat-scene"
+    assert plan.image_template.id == "daily-life-fashion"
+    assert plan.video_style.id == "video-cat-photo"
     assert "TASK IMAGE TEMPLATE" in plan.image_prompt_addition
     assert "VIDEO STYLE" not in plan.image_prompt_addition
     assert "VIDEO STYLE" in plan.video_prompt_addition
@@ -69,15 +69,15 @@ def test_builder_rejects_invalid_or_oversized_inputs():
 
 def test_identity_only_template_prompt_does_not_expect_a_garment_reference():
     plan = builder().build(
-        "character-design-sheet",
-        "video-cat-character",
+        "realistic-photography",
+        "video-cat-photo",
         "image",
         reference_mode="identity_only",
     )
 
     assert plan.reference_mode == "identity_only"
     assert "Image 2 is the garment" not in plan.task_image.prompt
-    assert "the only identity reference" in plan.task_image.prompt
+    assert "the only human identity reference" in plan.task_image.prompt
 
 
 def test_prompt_builder_sits_before_handler_without_changing_provider_contracts():
@@ -142,8 +142,8 @@ def test_generate_handler_persists_builder_plan_without_calling_provider(tmp_pat
         files={"product_image": ("garment.png", b"not-decoded-by-handler", "image/png")},
         data={
             "character_id": "asian_girl_001",
-            "image_template_id": "poster-layout-system",
-            "video_style_id": "video-cat-scene",
+            "image_template_id": "daily-life-fashion",
+            "video_style_id": "video-cat-photo",
             "output_type": "video",
             "prompt_input": "Soft morning light",
         },
@@ -158,5 +158,5 @@ def test_generate_handler_persists_builder_plan_without_calling_provider(tmp_pat
         payload["run_id"], "prompts/generation_prompt_plan.json"
     )
     assert plan["prompt_input"] == "Soft morning light"
-    assert plan["image_template"]["id"] == "poster-layout-system"
-    assert plan["video_style"]["id"] == "video-cat-scene"
+    assert plan["image_template"]["id"] == "daily-life-fashion"
+    assert plan["video_style"]["id"] == "video-cat-photo"

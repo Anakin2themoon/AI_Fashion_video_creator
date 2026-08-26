@@ -78,8 +78,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return True
         if api_path == "/generate":
             return True
-        if api_path.startswith(("/character-templates/", "/image-templates/")) and api_path.endswith("/generate"):
-            return True
         if api_path.startswith("/provider-config") and api_path != "/provider-config/catalog":
             return True
         if api_path.startswith(("/runtime-config", "/settings")):
