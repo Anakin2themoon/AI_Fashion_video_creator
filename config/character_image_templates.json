@@ -1,0 +1,38 @@
+{
+  "source": {
+    "name": "awesome-gpt-image-2",
+    "repository": "https://github.com/270438469/awesome-gpt-image-2",
+    "upstream": "https://github.com/freestylefly/awesome-gpt-image-2",
+    "license": "MIT",
+    "template_anchor": "docs/templates.md#tpl-character"
+  },
+  "templates": [
+    {
+      "id": "character-design-sheet",
+      "name": "角色设定图",
+      "summary": "同一人物的主视图、全身多角度与身份细节参考，适合作为后续换装和视频的一致性底稿。",
+      "cover": "/assets/character-templates/character-design-sheet.jpg",
+      "aspect_ratio": "2:3",
+      "size": "1024x1536",
+      "prompt": "Create a professional photorealistic character design sheet using the uploaded adult East Asian woman as the only identity reference. Preserve her exact face, facial proportions, natural skin texture, long straight black hair, body proportions and adult age in every view. Use a clean warm-white studio background and an organized premium fashion-production layout. Include one large front three-quarter hero portrait, one full-body front view, one full-body 45-degree view, one full-body side view, and three small facial close-ups. Keep the same simple fitted white tank top, black leggings and nude heels in every panel so the sheet remains a neutral identity reference for later virtual try-on. Use soft commercial studio lighting, realistic anatomy, coherent hands and feet, and consistent camera color. No additional people, no fantasy elements, no logos, no watermark, no decorative text, no identity drift, no outfit changes, no collage seams crossing the body. Output one complete production-ready character reference sheet."
+    },
+    {
+      "id": "action-breakdown-sheet",
+      "name": "4×4 动作分解参考表",
+      "summary": "16 格连续动作与方向标记，用于规划日常动作、舞蹈或镜头运动。",
+      "cover": "/assets/character-templates/action-breakdown-sheet.jpg",
+      "aspect_ratio": "1:1",
+      "size": "1024x1024",
+      "prompt": "Generate a clean professional 4 by 4 action breakdown reference sheet using the uploaded adult East Asian woman as the only identity reference. The sheet contains exactly 16 equal panels with thin neutral dividers and small numbers 1 through 16 in the upper-left corners. Show a natural daily-life motion sequence progressing from neutral standing, turning, walking, looking back, reaching, sitting, standing up, and a relaxed finishing pose. Every panel must show the same recognizable face, long straight black hair, natural adult body proportions, simple fitted white tank top, black leggings and nude heels. Keep the background pure warm white and use realistic soft studio light. Add only subtle direction arrows or motion-path lines where helpful. Prioritize complete body visibility and readable motion. No extra characters, no identity drift, no costume changes, no complex environment, no fantasy styling, no watermark. Output one clear production reference sheet."
+    },
+    {
+      "id": "3d-collectible-toy",
+      "name": "3D 收藏玩具",
+      "summary": "保持人物脸部与服装锚点，将人物转换为高级收藏级角色模型。",
+      "cover": "/assets/character-templates/3d-collectible-toy.jpg",
+      "aspect_ratio": "2:3",
+      "size": "1024x1536",
+      "prompt": "Transform the uploaded adult East Asian woman into one high-end stylized 3D collectible figure while keeping her identity immediately recognizable. Preserve her facial structure, eyes, nose, lips, long straight black hair, calm expression and the recognizable white tank top, black leggings and nude heels. Use a tasteful slightly enlarged head and premium designer-toy proportions without becoming childish. Materials: finely detailed matte resin and vinyl, subtle realistic skin texture, individually defined hair strands, precise fabric seams, polished presentation base. Center the full figure against a clean warm-white studio backdrop with soft product-photography lighting, controlled reflections and a crisp silhouette. No packaging, no additional figures, no text, no logo, no watermark, no cheap plastic appearance, no identity drift, no deformed hands or feet. Output one complete premium collectible render."
+    }
+  ]
+}

@@ -6,7 +6,7 @@ const esc = (value='') => String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','
 const json = (value) => esc(JSON.stringify(value ?? {}, null, 2));
 
 function toast(message){const el=$('#toast');el.textContent=message;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2600)}
-function showView(name){$$('.view').forEach(v=>v.classList.remove('active'));$(`#${name}View`).classList.add('active');$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===name));if(name==='runs') loadRuns();if(name==='settings') loadSystem();}
+function showView(name){$$('.view').forEach(v=>v.classList.remove('active'));$(`#${name}View`).classList.add('active');$$('.nav').forEach(n=>n.classList.toggle('active',n.dataset.view===name));if(name==='templates') loadCharacterTemplates();if(name==='runs') loadRuns();if(name==='settings') loadSystem();}
 $$('.nav').forEach(button=>button.onclick=()=>showView(button.dataset.view));
 
 const fileInput=$('#productImage'), drop=$('#dropZone');
@@ -22,6 +22,31 @@ function updateProgress(run){const progress=run.progress||0;$('#progressValue').
 function watchRun(runId){clearInterval(pollTimer);if(eventSource)eventSource.close();eventSource=new EventSource(`${API}/runs/${runId}/events`);eventSource.addEventListener('progress',()=>fetchRun(runId));eventSource.addEventListener('close',()=>eventSource.close());pollTimer=setInterval(()=>fetchRun(runId),900);fetchRun(runId)}
 async function fetchRun(runId){try{const response=await fetch(`${API}/runs/${runId}`);if(!response.ok)return;const run=await response.json();updateProgress(run);if(['COMPLETED','FAILED'].includes(run.status)){clearInterval(pollTimer);eventSource?.close();$('#generateButton').disabled=!generationReady}}catch{}}
 function showFinal(run){const panel=$('#finalPanel');panel.classList.remove('hidden');const copy=run.is_real_output?'人物身份与当前衣服主题已锁定，五个审核镜头合成为 18 秒 9:16 H.264 成片。':'这是工程流程演示，不代表真实换装结果。';panel.innerHTML=`<video controls playsinline src="${esc(`${location.protocol}//${location.hostname}:8000${run.final_video_url}`)}"></video><div><p class="eyebrow">${run.is_real_output?'THEME TRY-ON COMPLETED':'PIPELINE DEMO'}</p><h2>你的成片已就绪。</h2><p>${copy}</p><button class="primary" onclick="openRun('${esc(run.run_id)}')"><span>查看完整任务</span><b>→</b></button></div>`;panel.scrollIntoView({behavior:'smooth'})}
+
+let characterTemplatesLoaded=false;
+async function loadCharacterTemplates(){
+  if(characterTemplatesLoaded)return;
+  const response=await fetch(`${API}/character-templates`);
+  if(!response.ok){$('#templateGrid').innerHTML='<p class="error">人物模板目录读取失败</p>';return}
+  const catalog=await response.json();
+  $('#templateGrid').innerHTML=catalog.templates.map(item=>`<article class="template-card"><img src="${esc(item.cover)}" alt="${esc(item.name)}"><div><span class="template-ratio">${esc(item.aspect_ratio)}</span><h3>${esc(item.name)}</h3><p>${esc(item.summary)}</p><button class="primary compact template-generate" data-template="${esc(item.id)}"><span>生成这一类型</span><b>→</b></button></div></article>`).join('');
+  $$('.template-generate').forEach(button=>button.onclick=()=>generateCharacterTemplate(button));
+  characterTemplatesLoaded=true;
+}
+async function generateCharacterTemplate(button){
+  const result=$('#templateResult'),original=button.innerHTML;
+  button.disabled=true;button.innerHTML='<span>图片生成中…</span><b>•</b>';
+  result.classList.remove('hidden');result.innerHTML='<p class="settings-note">正在使用当前换装图片模型生成，仅执行这一张图片。</p>';
+  try{
+    const response=await fetch(`${API}/character-templates/${encodeURIComponent(button.dataset.template)}/generate`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({character_id:'asian_girl_001'})});
+    const payload=await response.json();
+    if(!response.ok)throw new Error(payload.detail||'人物模板生成失败');
+    const media=`${location.protocol}//${location.hostname}:8000${payload.image_url}`;
+    result.innerHTML=`<img src="${esc(media)}" alt="${esc(payload.template_name)}"><div><p class="eyebrow">IMAGE GENERATED</p><h3>${esc(payload.template_name)}</h3><p>模型：${esc(payload.model)} · 人物：${esc(payload.character_id)}</p><a class="secondary result-link" href="${esc(media)}" target="_blank" rel="noopener">打开原图</a></div>`;
+    result.scrollIntoView({behavior:'smooth'});toast(`${payload.template_name} 已生成`);
+  }catch(error){result.innerHTML=`<p class="error">${esc(error.message)}</p>`}
+  finally{button.disabled=false;button.innerHTML=original}
+}
 
 $('#refreshRuns').onclick=loadRuns;
 async function loadRuns(){const response=await fetch(`${API}/runs`);const runs=response.ok?await response.json():[];$('#runList').innerHTML=runs.length?runs.map(run=>`<button class="run-item ${run.run_id===currentRunId?'active':''}" onclick="selectRun('${esc(run.run_id)}')"><strong>${esc(run.run_id)}</strong><span>${esc(run.status)} · ${run.progress}%</span><span>${esc(run.current_step)}</span></button>`).join(''):'<div class="run-detail empty">尚无本地任务</div>'}

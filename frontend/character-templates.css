@@ -1,0 +1,80 @@
+.template-intro {
+  max-width: 760px;
+  color: var(--muted);
+  line-height: 1.8;
+  margin: 0 0 24px;
+}
+
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.template-card {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .32);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.template-card > img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #ddd;
+}
+
+.template-card > div {
+  padding: 20px;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.template-card h3 {
+  font: 25px Georgia, "Songti SC", serif;
+  margin: 8px 0;
+}
+
+.template-card p {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+  min-height: 62px;
+}
+
+.template-card .primary {
+  margin-top: auto;
+  width: 100%;
+}
+
+.template-ratio {
+  font: 10px Inter, sans-serif;
+  letter-spacing: .12em;
+  color: var(--accent);
+}
+
+.template-result {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--dark);
+  color: #fff;
+  display: grid;
+  grid-template-columns: minmax(240px, 430px) 1fr;
+  gap: 30px;
+  align-items: center;
+}
+
+.template-result.hidden { display: none; }
+.template-result img { width: 100%; max-height: 720px; object-fit: contain; background: #111; }
+.template-result h3 { font: 38px Georgia, "Songti SC", serif; margin: 8px 0; }
+.template-result p { color: #cfc7bc; }
+.result-link { display: inline-block; color: #fff; border-color: #fff; text-decoration: none; margin-top: 12px; }
+
+@media (max-width: 850px) {
+  .template-grid,
+  .template-result { grid-template-columns: 1fr; }
+}

@@ -41,6 +41,8 @@ docker compose down
 3. 在“创作”页拖入 JPG、PNG 或 WebP 衣服商品图片，点击“按当前衣服生成亚洲日常场景 18S 视频”。
 4. 页面通过 SSE 与短轮询显示实时进度，完成后可直接播放 18 秒竖屏成片。
 
+“人物模板”页提供角色设定图、4×4 动作分解参考表和 3D 收藏玩具三类独立图片生成。它们复用当前人物身份参考和已配置的换装图片 API，但不会启动视觉分析、视频生成或 18 秒成片流水线。生成结果保存在 `workspace/character_templates/{generation_id}/`。
+
 NoToken 只出现在视频生成服务商列表中。视觉、换装、视频三条路由互不绑定：例如可以选择快跑视觉、OpenAI 换装、NoToken Seedance 视频，并为三项输入完全不同的 Key。
 
 快跑视频模型在 WebUI 中按系列分组显示：
@@ -104,6 +106,8 @@ fullbody_side.png
 生产生成不再把四宫格直接提交为唯一人物参考。图片模型只从商品图提取身体直接穿着的服装，明确排除商品原模特身份、背景、头盔、翅膀、武器和漂浮特效；视频模型负责真实动作和当代亚洲日常生活环境。Mock/静态 FFmpeg 只允许自动化测试，不能作为真实任务 fallback。
 
 运行时配置 API 同时提供 `/api/v1` 和 `/api/v4` 前缀：`provider-config/catalog`、`provider-config`、`provider-config/test`、`runtime-config`。任何响应都不包含完整 API Key。
+
+人物图片模板及示例封面改编自 [awesome-gpt-image-2](https://github.com/freestylefly/awesome-gpt-image-2) 的“人物与角色”模板，依据 MIT License 使用；来源元数据保存在 `config/character_image_templates.json`。
 
 ## 测试
 

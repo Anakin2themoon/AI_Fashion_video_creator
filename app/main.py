@@ -8,6 +8,7 @@ from app.api.routes_generate import router as generate_router
 from app.api.routes_runs import router as runs_router
 from app.api.routes_system import router as system_router
 from app.api.routes_provider_config import router as provider_config_router
+from app.api.routes_character_templates import router as character_templates_router
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -31,6 +32,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(system_router, prefix="/api/v1")
     app.include_router(provider_config_router, prefix="/api/v1")
     app.include_router(provider_config_router, prefix="/api/v4")
+    app.include_router(character_templates_router, prefix="/api/v1")
     app.mount("/media", StaticFiles(directory=str(settings.workspace_dir)), name="media")
 
     @app.get("/health")

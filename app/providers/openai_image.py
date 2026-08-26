@@ -56,6 +56,190 @@ class OpenAIImageProvider(ImageProvider):
             self._generate, character_refs, product_image, prompt, output_path
         )
 
+    async def generate_from_references(
+        self,
+        reference_images: list[Path],
+        prompt: str,
+        output_path: Path,
+        size: str = "1024x1536",
+    ) -> Asset:
+        if not reference_images:
+            raise ValueError("At least one reference image is required")
+        return await asyncio.to_thread(
+            self._generate_reference_image,
+            reference_images,
+            prompt,
+            output_path,
+            size,
+        )
+
+    def _generate_reference_image(
+        self,
+        reference_images: list[Path],
+        prompt: str,
+        output_path: Path,
+        size: str,
+    ) -> Asset:
+        try:
+            from openai import OpenAI
+        except ImportError as exc:
+            raise RuntimeError(
+                "Install the openai package to use IMAGE_PROVIDER=openai"
+            ) from exc
+
+        references = list(reference_images)
+        if self.json_reference_generation and len(references) > 2:
+            references = references[:2]
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.json_reference_generation:
+            return self._generate_json_references(
+                references, prompt, output_path, size
+            )
+        if self.async_generation:
+            return self._generate_async_references(
+                references, prompt, output_path, size
+            )
+
+        client = self.client
+        if client is None:
+            kwargs = {"api_key": self.api_key}
+            if self.base_url:
+                kwargs["base_url"] = self.base_url
+            client = OpenAI(**kwargs)
+        with ExitStack() as stack:
+            inputs = [stack.enter_context(path.open("rb")) for path in references]
+            result = client.images.edit(
+                model=self.model,
+                image=inputs,
+                prompt=prompt,
+                size=size,
+                quality="high",
+            )
+        first = result.data[0]
+        encoded = getattr(first, "b64_json", None)
+        if encoded:
+            output_path.write_bytes(base64.b64decode(encoded))
+        else:
+            url = getattr(first, "url", None)
+            if not url:
+                raise RuntimeError("Image relay returned neither b64_json nor URL")
+            response = httpx.get(url, timeout=120, follow_redirects=True)
+            response.raise_for_status()
+            output_path.write_bytes(response.content)
+        return Asset(path=str(output_path), media_type="image/png")
+
+    def _generate_json_references(
+        self,
+        references: list[Path],
+        prompt: str,
+        output_path: Path,
+        size: str,
+    ) -> Asset:
+        if not self.base_url:
+            raise RuntimeError("JSON reference generation requires a base URL")
+        return self._generate_relay_references(
+            references, prompt, output_path, size, async_mode=False
+        )
+
+    def _generate_async_references(
+        self,
+        references: list[Path],
+        prompt: str,
+        output_path: Path,
+        size: str,
+    ) -> Asset:
+        if not self.base_url:
+            raise RuntimeError("Async image generation requires a base URL")
+        return self._generate_relay_references(
+            references, prompt, output_path, size, async_mode=True
+        )
+
+    def _generate_relay_references(
+        self,
+        references: list[Path],
+        prompt: str,
+        output_path: Path,
+        size: str,
+        async_mode: bool,
+    ) -> Asset:
+        attempt_dir = self._create_attempt_dir(output_path)
+        prompt = prompt[:4000]
+        endpoint = "/images/generations/async" if async_mode else "/images/generations"
+        payload = {
+            "model": self.model,
+            "prompt": prompt,
+            "n": 1,
+            "size": size,
+            "quality": "high" if async_mode else "auto",
+            "image": [self._data_uri(path) for path in references],
+            "response_format": "url",
+        }
+        if not async_mode:
+            payload["watermark"] = False
+        manifest = [
+            {
+                "role": "character_identity_reference",
+                "name": path.name,
+                "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                "bytes": path.stat().st_size,
+            }
+            for path in references
+        ]
+        (attempt_dir / "final_prompt.txt").write_text(prompt, encoding="utf-8")
+        self._write_json(attempt_dir / "input_manifest.json", {"inputs": manifest})
+        self._write_json(
+            attempt_dir / "final_request.json",
+            {
+                "method": "POST",
+                "endpoint": endpoint,
+                "model": self.model,
+                "size": size,
+                "quality": payload["quality"],
+                "response_format": "url",
+                "reference_count": len(references),
+                "references": manifest,
+            },
+        )
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
+        client = self.http_client or httpx.Client(
+            timeout=httpx.Timeout(60.0, read=140.0), follow_redirects=True
+        )
+        owns_client = self.http_client is None
+        try:
+            response = self._post_with_retry(
+                client,
+                f"{self.base_url.rstrip('/')}{endpoint}",
+                headers,
+                payload,
+                attempt_dir,
+            )
+            result = self._safe_json(response)
+            self._write_json(attempt_dir / "provider_response.json", result)
+            item = self._first_image_result(result)
+            if item is None and async_mode:
+                task_id = result.get("id") or result.get("task_id") or result.get("taskId")
+                if not task_id:
+                    raise RuntimeError("Async image API returned neither task id nor image")
+                result = self._poll_image_task(client, str(task_id), headers, attempt_dir)
+                item = self._first_image_result(result)
+            if item is None:
+                raise RuntimeError("Character template task completed without an image")
+            self._write_image_result(client, item, output_path)
+            return Asset(path=str(output_path), media_type="image/png")
+        except Exception as exc:
+            self._write_json(
+                attempt_dir / "image_gate.json",
+                {"status": "FAILED", "error": f"{type(exc).__name__}: {exc}"},
+            )
+            raise
+        finally:
+            if owns_client:
+                client.close()
+
     def _generate(
         self,
         character_refs: list[Path],

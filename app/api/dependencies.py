@@ -5,6 +5,7 @@ from app.services.config_loader import ConfigLoader
 from app.services.asset_manager import AssetManager
 from app.services.run_manager import RunManager
 from app.services.character_registry import CharacterRegistry
+from app.services.character_template_catalog import CharacterTemplateCatalog
 from app.services.prompt_builder import PromptBuilder
 from app.services.ffmpeg_service import FFmpegService
 from app.agents.product_analyzer import ProductAnalyzer
@@ -41,6 +42,7 @@ class Container:
     secrets: EncryptedSecretStore
     relay_config: RelayConfigStore
     provider_manager: RuntimeProviderManager
+    character_templates: CharacterTemplateCatalog
 
 
 def build_container(settings: Settings) -> Container:
@@ -100,6 +102,9 @@ def build_container(settings: Settings) -> Container:
     )
     provider_manager = RuntimeProviderManager(settings, relay_config, ffmpeg)
     provider_manager.bind(orchestrator)
+    character_templates = CharacterTemplateCatalog(
+        settings.config_dir / "character_image_templates.json"
+    )
     return Container(
         settings,
         assets,
@@ -111,4 +116,5 @@ def build_container(settings: Settings) -> Container:
         secrets,
         relay_config,
         provider_manager,
+        character_templates,
     )

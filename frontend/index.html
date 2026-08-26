@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/theme-override.css" />
   <link rel="stylesheet" href="/provider-settings.css" />
+  <link rel="stylesheet" href="/character-templates.css" />
 </head>
 <body>
   <div class="noise"></div>
@@ -14,6 +15,7 @@
     <a class="brand" href="#generate"><span class="brand-mark">F</span><span>AI Fashion<br><small>VIDEO DIRECTOR</small></span></a>
     <nav>
       <button data-view="generate" class="nav active">创作</button>
+      <button data-view="templates" class="nav">人物模板</button>
       <button data-view="runs" class="nav">任务</button>
       <button data-view="settings" class="nav">设置</button>
     </nav>
@@ -58,6 +60,15 @@
         </aside>
       </div>
       <div id="finalPanel" class="final-panel hidden"></div>
+    </section>
+
+    <section id="templatesView" class="view">
+      <div class="section-head">
+        <div><p class="eyebrow">AWESOME GPT-IMAGE-2 · MIT</p><h2>人物图片模板</h2></div>
+      </div>
+      <p class="template-intro">已将上游人物与角色工业模板适配为当前亚洲人物身份参考。每一类只调用独立的换装图片 API，不会启动视频或完整换装流水线。</p>
+      <div id="templateGrid" class="template-grid"><p class="settings-note">正在读取模板目录…</p></div>
+      <div id="templateResult" class="template-result hidden"></div>
     </section>
 
     <section id="runsView" class="view">
